@@ -6,6 +6,8 @@ import datetime
 import os
 import logging
 import configparser
+import sys
+
 from vnpy.event import EventEngine, Event
 from vnpy.trader.event import *
 from vnpy.trader.engine import MainEngine, OmsEngine
@@ -57,14 +59,22 @@ class CtpSession:
         abs_filepath = os.path.join(os.path.dirname(os.path.abspath(__file__)), ini_filepath)
         parser.read(abs_filepath, encoding="utf-8")
         self.conn_settings = {item[0]: item[1] for item in parser.items("connection")}
-        self._init_logger(log_dir=parser.get("log", "output_dir"),
-                          file_level=parser.getint("log", "file_level"),
-                          console_level=parser.getint("log", "console_level"))
+        self._init_logger(log_dir=parser.get("log", "output_dir", fallback="../log"),
+                          file_level=parser.getint("log", "file_level",fallback=logging.DEBUG),
+                          console_level=parser.getint("log", "console_level", fallback=logging.INFO),
+                          encoding=parser.get("log", "encoding",fallback="utf-8"))
         self._logger.info(f"正在读取配置文件: {abs_filepath}")
 
-    def _init_logger(self, log_dir: str, file_level: int = logging.DEBUG, console_level: int = logging.INFO) -> None:
+    def _init_logger(self, log_dir: str, file_level: int, console_level: int, encoding: str) -> None:
         log_filename = f"ctp-{datetime.now().strftime('%Y%m%d-%H%M%S')}.log.txt"
-        log_filepath = os.path.join(os.path.join(os.path.dirname(os.path.abspath(__file__)), log_dir), log_filename)
+        log_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), log_dir)
+        if not os.path.exists(log_dir):
+            os.mkdir(log_dir)
+        elif not os.path.isdir(log_dir):
+            print(f"日志输出目录 {log_dir} 已存在且不为文件夹", file=sys.stderr)
+            exit(0)
+
+        log_filepath=os.path.join(log_dir, log_filename)
 
         self._logger = logging.getLogger(__name__)
         self._logger.setLevel(logging.DEBUG)
@@ -72,7 +82,7 @@ class CtpSession:
         console_handler = logging.StreamHandler()
         console_handler.setLevel(console_level)
 
-        file_handler = logging.FileHandler(log_filepath)
+        file_handler = logging.FileHandler(log_filepath, encoding=encoding)
         file_handler.setLevel(file_level)
 
         formatter = logging.Formatter('%(asctime)s [%(levelname)s]: %(message)s')
