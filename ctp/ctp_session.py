@@ -40,19 +40,19 @@ class CtpSession:
         self.event_engine.register(EVENT_POSITION, self._on_position)
 
     def _on_tick(self, event: Event) -> None:
-        self._logger.debug(f"切片行情: {event.data}")
+        self._logger.debug(f"[回调]行情: {event.data}")
 
     def _on_trade(self, event: Event) -> None:
-        self._logger.info(f"已成交: {event.data}")
+        self._logger.info(f"[回调]成交: {event.data}")
 
     def _on_order(self, event: Event) -> None:
-        self._logger.info(f"已下单: {event.data}")
+        self._logger.info(f"[回调]订单: {event.data}")
 
     def _on_account(self, event: Event) -> None:
-        self._logger.debug(f"账户: {event.data}")
+        self._logger.debug(f"[回调]账户: {event.data}")
 
     def _on_position(self, event: Event) -> None:
-        self._logger.debug(f"持仓: {event.data}")
+        self._logger.debug(f"[回调]持仓: {event.data}")
 
     def read_config(self, ini_filepath: str = "config.ini") -> None:
         parser = configparser.ConfigParser()
@@ -111,33 +111,42 @@ class CtpSession:
         return pretty_str.strip()
 
     def send_order(self, req: OrderRequest):
-        self._logger.info(f"下单：{vars(req)}")
+        self._logger.info(f"[执行]下单：{vars(req)}")
         return self.main_engine.send_order(req, "CTP")
 
     def cancel_order(self, req: CancelRequest):
-        self._logger.info(f"撤单：{vars(req)}")
+        self._logger.info(f"[执行]撤单：{vars(req)}")
         return self.main_engine.cancel_order(req, "CTP")
 
     def get_all_exchanges(self):
-        return self.main_engine.get_all_exchanges()
+        result = self.main_engine.get_all_exchanges()
+        self._logger.info(f"[执行]查询交易所: {result}")
+        return result
 
     def get_all_accounts(self):
-        return self.oms_engine.get_all_accounts()
+        result = self.oms_engine.get_all_accounts()
+        self._logger.info(f"[执行]查询账户: {result}")
+        return result
 
     def get_all_positions(self):
-        return self.oms_engine.get_all_positions()
+        result = self.oms_engine.get_all_positions()
+        self._logger.info(f"[执行]查询持仓: {result}")
+        return result
 
     def query_contract(self, symbol: str, exchange:Exchange):
         result = self.oms_engine.get_tick(f"{symbol}.{exchange.value}")
-        self._logger.debug(f"查询行情 {symbol}.{exchange.value}: {result}")
+        self._logger.debug(f"[执行]查询合约: {symbol}.{exchange.value}: {result}")
         return result
 
     def close(self):
+        self._logger.info("关闭连接！")
         return self.main_engine.close()
 
     def get_history_orders(self):
-        return self.oms_engine.get_all_orders()
+        result = self.oms_engine.get_all_orders()
+        self._logger.info(f"[执行]查询历史订单: {result}")
+        return result
 
     def subscribe(self, symbol: str, exchange: Exchange):
-        self._logger.info(f"订阅行情：{symbol}.{exchange.value}")
+        self._logger.info(f"[执行]订阅行情: {symbol}.{exchange.value}")
         return self.main_engine.subscribe(SubscribeRequest(symbol=symbol, exchange=exchange), "CTP")

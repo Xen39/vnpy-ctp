@@ -28,7 +28,7 @@ if __name__ == "__main__":
             symbol, exchange = input_symbol_exchange()
             contract = session.query_contract(symbol, exchange)
             if contract is None:
-                print("该行情未订阅")
+                print("该行情未订阅，订阅后才能获取最新行情")
             else:
                 print(f"最新行情:{contract}")
             while True:
@@ -51,7 +51,7 @@ if __name__ == "__main__":
             req = CancelRequest(orderid=order_id, symbol=symbol, exchange=exchange)
             session.cancel_order(req)
         elif op == "4":
-            print("\n".join(session.get_history_orders()))
+            session.get_history_orders()
         elif op == "5":
             session.subscribe(*input_symbol_exchange())
         elif op == "q":
