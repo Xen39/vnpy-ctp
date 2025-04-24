@@ -127,3 +127,7 @@ class CtpSession:
 
     def get_history_orders(self):
         return self.oms_engine.get_all_orders()
+
+    def subscribe(self, symbol: str, exchange: Exchange):
+        self._logger.info(f"订阅行情：{symbol}.{exchange.value}")
+        return self.main_engine.subscribe(SubscribeRequest(symbol=symbol, exchange=exchange), "CTP")

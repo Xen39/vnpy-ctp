@@ -44,12 +44,16 @@ if __name__ == "__main__":
     print("合约列表：")
     print(session.get_all_contracts_pretty_str())
     while True:
-        op = input("1(查询合约列表) 2(查询行情+下单) 3(撤单) 4(查询历史订单) q(退出程序) 请输入操作: ").strip()
+        op = input("1(查询合约列表) 2(查询行情+下单) 3(撤单) 4(查询历史订单) 5(订阅行情) q(退出程序) 请输入操作: ").strip()
         if op == "1":
             print(session.get_all_contracts_pretty_str())
         elif op == "2":
             symbol, exchange = input_symbol_exchange()
-            print(session.query_contract(symbol, exchange))
+            contract = session.query_contract(symbol, exchange)
+            if contract is None:
+                print("该行情未订阅")
+            else:
+                print(f"最新行情:{contract}")
             while True:
                 side = input("请输入方向(0买多,1卖多,2买空,3卖空,q退出):")
                 if side in ("0", "1", "2", "3"):
@@ -71,6 +75,8 @@ if __name__ == "__main__":
             session.cancel_order(req)
         elif op == "4":
             print("\n".join(session.get_history_orders()))
+        elif op == "5":
+            session.subscribe(*input_symbol_exchange())
         elif op == "q":
             session.close()
             print("程序退出！")
