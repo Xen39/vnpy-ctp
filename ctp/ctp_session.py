@@ -101,9 +101,11 @@ class CtpSession:
         return pretty_str.strip()
 
     def send_order(self, req: OrderRequest):
+        self._logger.info(f"下单：{vars(req)}")
         return self.main_engine.send_order(req, "CTP")
 
     def cancel_order(self, req: CancelRequest):
+        self._logger.info(f"撤单：{vars(req)}")
         return self.main_engine.cancel_order(req, "CTP")
 
     def get_all_exchanges(self):
@@ -116,7 +118,9 @@ class CtpSession:
         return self.oms_engine.get_all_positions()
 
     def query_contract(self, symbol: str, exchange:Exchange):
-        return self.oms_engine.get_tick(f"{symbol}.{exchange.value}")
+        result = self.oms_engine.get_tick(f"{symbol}.{exchange.value}")
+        self._logger.debug(f"查询行情 {symbol}.{exchange.value}: {result}")
+        return result
 
     def close(self):
         return self.main_engine.close()
