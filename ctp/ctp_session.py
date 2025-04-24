@@ -109,3 +109,6 @@ class CtpSession:
 
     def query_contract(self, vt_symbol: str):
         return self.oms_engine.get_tick(vt_symbol)
+
+    def close(self):
+        return self.main_engine.close()

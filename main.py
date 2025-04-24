@@ -23,8 +23,8 @@ if __name__ == "__main__":
     session.connect()
     time.sleep(8)
     print("等待连接结束")
-    print("交易所列表: ", [xch.value for xch in session.get_all_exchanges()])
     print("合约列表：")
+    print("\n".join(session.get_all_contracts()))
     while True:
         op = input("请输入操作: 1(查询行情/下单) q(退出程序)").strip()
         if op == "1":
@@ -48,6 +48,7 @@ if __name__ == "__main__":
             print("下单:", req)
             session.send_order(req)
         elif op == "q":
+            session.close()
             print("程序退出！")
             break
         else:
