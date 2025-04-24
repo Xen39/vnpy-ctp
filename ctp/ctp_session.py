@@ -12,14 +12,17 @@ from vnpy.event import EventEngine, Event
 from vnpy.trader.event import *
 from vnpy.trader.engine import MainEngine, OmsEngine
 from vnpy.trader.object import *
-
+from vnpy_ctastrategy import CtaEngine, CtaStrategyApp
 from vnpy_ctp import CtpGateway
+
+from strategy.MACD import MACDStrategy
 
 
 class CtpSession:
     event_engine: EventEngine
     main_engine: MainEngine
     oms_engine: OmsEngine
+    cta_engine: CtaEngine
     conn_settings: dict
     _logger: logging.Logger
 
@@ -31,6 +34,8 @@ class CtpSession:
         self.event_engine = EventEngine()
         self.main_engine = MainEngine(self.event_engine)
         self.oms_engine = self.main_engine.add_engine(OmsEngine)
+        self.cta_engine = self.main_engine.add_app(CtaStrategyApp)
+        self.cta_engine.init_engine()
 
     def _register_events(self) -> None:
         self.event_engine.register(EVENT_TICK, self._on_tick)
@@ -150,3 +155,24 @@ class CtpSession:
     def subscribe(self, symbol: str, exchange: Exchange):
         self._logger.info(f"[执行]订阅行情: {symbol}.{exchange.value}")
         return self.main_engine.subscribe(SubscribeRequest(symbol=symbol, exchange=exchange), "CTP")
+
+    def add_strategy(self, strategy_class, vt_symbols):
+        if not isinstance(vt_symbols, list):
+            vt_symbols = [vt_symbols]
+        for vt_symbol in vt_symbols:
+            strategy_class_name = strategy_class.__name__
+            strategy_symbol_name = f"{strategy_class_name}-{vt_symbols}"
+            if strategy_class == MACDStrategy:
+                setting = {
+                    "fast_period": 12,
+                    "slow_period": 26,
+                    "signal_period": 9
+                }
+                self.cta_engine.add_strategy(strategy_class_name, strategy_symbol_name, vt_symbol, setting)
+            else:
+                self._logger.error(f"非法策略: {strategy_class}")
+            # CtaEngine.load_bar requires a callback, but I did not find its usage in vnpy source code
+            def do_nothing(param) -> None:
+                pass
+            self.cta_engine.load_bar(vt_symbol=vt_symbol, days=10, interval=Interval.MINUTE, callback=do_nothing, use_database=False)
+            self.cta_engine.start_strategy(strategy_symbol_name)
