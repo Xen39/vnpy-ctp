@@ -12,8 +12,6 @@ SETTINGS["log.level"] = INFO
 SETTINGS["log.console"] = True
 
 
-
-
 def input_symbol_exchange() -> tuple[str, Exchange]:
     def is_valid_vt_symbol(vt_symbol: str) -> bool:
         vt_pattern = re.compile(r"[a-zA-Z0-9]+\.[A-Z]+")
@@ -57,8 +55,8 @@ if __name__ == "__main__":
             while True:
                 side = input("请输入方向(0买多,1卖多,2买空,3卖空,q退出):")
                 if side in ("0", "1", "2", "3"):
-                    direction: Direction = Direction.LONG if side in (0, 1) else Direction.SHORT
-                    offset: Offset = Offset.OPEN if side in (0, 2) else Offset.CLOSE
+                    direction: Direction = Direction.LONG if side in ("0", "1") else Direction.SHORT
+                    offset: Offset = Offset.OPEN if side in ("0", "2") else Offset.CLOSE
                     price, volume = input_price_volume()
                     req = OrderRequest(symbol=symbol, exchange=exchange, direction=direction, type=OrderType.LIMIT,
                                        volume=volume, price=price, offset=offset)
