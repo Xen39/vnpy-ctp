@@ -31,11 +31,11 @@ if __name__ == "__main__":
     time.sleep(8)
     print("等待连接结束")
     print("合约列表：")
-    print("\n".join(session.get_all_contracts()))
+    print(session.get_all_contracts_pretty_str())
     while True:
         op = input("请输入操作: 1(查询合约列表) 2(查询行情+下单) 3(撤单) 4(查询历史订单) q(退出程序)").strip()
         if op == "1":
-            print("\n".join(session.get_all_contracts()))
+            print(session.get_all_contracts_pretty_str())
         elif op == "2":
             symbol, exchange = input_symbol_exchange()
             print(session.query_contract(symbol, exchange))

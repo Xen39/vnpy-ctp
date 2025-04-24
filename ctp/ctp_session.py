@@ -92,6 +92,14 @@ class CtpSession:
     def get_all_contracts(self):
         return self.oms_engine.get_all_contracts()
 
+    def get_all_contracts_pretty_str(self, step=5):
+        contracts = self.get_all_contracts()
+        pretty_str = ""
+        for i in range(0, len(contracts), step):
+            pretty_str += "|| ".join(f"{c.symbol:15} {c.exchange.value:6}" for c in contracts[i:i+step])
+            pretty_str += "\n"
+        return pretty_str.strip()
+
     def send_order(self, req: OrderRequest):
         return self.main_engine.send_order(req, "CTP")
 
