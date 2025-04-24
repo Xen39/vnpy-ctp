@@ -107,8 +107,11 @@ class CtpSession:
     def get_all_positions(self):
         return self.oms_engine.get_all_positions()
 
-    def query_contract(self, vt_symbol: str):
-        return self.oms_engine.get_tick(vt_symbol)
+    def query_contract(self, symbol: str, exchange:Exchange):
+        return self.oms_engine.get_tick(f"{symbol}.{exchange.value}")
 
     def close(self):
         return self.main_engine.close()
+
+    def get_history_orders(self):
+        return self.oms_engine.get_all_orders()
