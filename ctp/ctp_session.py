@@ -16,6 +16,8 @@ from vnpy_ctastrategy import CtaEngine, CtaStrategyApp
 from vnpy_ctp import CtpGateway
 
 from .input import input_int
+from .output import to_string
+
 
 class CtpSession:
     event_engine: EventEngine
@@ -49,19 +51,19 @@ class CtpSession:
         self.event_engine.register(EVENT_POSITION, self._on_position)
 
     def _on_tick(self, event: Event) -> None:
-        self.logger().debug(f"[回调]行情: {event.data}")
+        self.logger().debug(f"[回调]行情: {to_string(event.data)}")
 
     def _on_trade(self, event: Event) -> None:
-        self.logger().info(f"[回调]成交: {event.data}")
+        self.logger().info(f"[回调]成交: {to_string(event.data)}")
 
     def _on_order(self, event: Event) -> None:
-        self.logger().info(f"[回调]订单: {event.data}")
+        self.logger().info(f"[回调]订单: {to_string(event.data)}")
 
     def _on_account(self, event: Event) -> None:
-        self.logger().debug(f"[回调]账户: {event.data}")
+        self.logger().debug(f"[回调]账户: {to_string(event.data)}")
 
     def _on_position(self, event: Event) -> None:
-        self.logger().debug(f"[回调]持仓: {event.data}")
+        self.logger().debug(f"[回调]持仓: {to_string(event.data)}")
 
     def read_config(self, ini_filepath: str = "config.ini") -> None:
         parser = configparser.ConfigParser()
@@ -131,22 +133,22 @@ class CtpSession:
 
     def get_all_exchanges(self):
         result = self.main_engine.get_all_exchanges()
-        self.logger().info(f"[执行]查询交易所: {result}")
+        self.logger().info(f"[执行]查询交易所: {to_string(result)}")
         return result
 
     def get_all_accounts(self):
         result = self.oms_engine.get_all_accounts()
-        self.logger().info(f"[执行]查询账户: {result}")
+        self.logger().info(f"[执行]查询账户: {to_string(result)}")
         return result
 
     def get_all_positions(self):
         result = self.oms_engine.get_all_positions()
-        self.logger().info(f"[执行]查询持仓: {result}")
+        self.logger().info(f"[执行]查询持仓: {to_string(result)}")
         return result
 
     def query_contract(self, symbol: str, exchange: Exchange):
         result = self.oms_engine.get_tick(f"{symbol}.{exchange.value}")
-        self.logger().debug(f"[执行]查询合约: {symbol}.{exchange.value}: {result}")
+        self.logger().debug(f"[执行]查询合约: {symbol}.{exchange.value}: {to_string(result)}")
         return result
 
     def close(self):
@@ -156,7 +158,7 @@ class CtpSession:
 
     def get_history_orders(self):
         result = self.oms_engine.get_all_orders()
-        self.logger().info(f"[执行]查询历史订单: {result}")
+        self.logger().info(f"[执行]查询历史订单: {to_string(result)}")
         return result
 
     def subscribe(self, symbol: str, exchange: Exchange):
@@ -167,7 +169,7 @@ class CtpSession:
         strategy_dict = {i: name for i, name in enumerate(self.cta_engine.get_all_strategy_class_names())}
         for i, strategy_class_name in strategy_dict.items():
             print(f"{i}: {strategy_class_name}")
-        idx = input_int(0, len(strategy_dict)- 1)
+        idx = input_int(0, len(strategy_dict) - 1)
         return strategy_dict[idx]
 
     def add_strategy(self, strategy_class_name: str, vt_symbols: str | list) -> None:
@@ -176,13 +178,16 @@ class CtpSession:
         for vt_symbol in vt_symbols:
             strategy_name = f"{strategy_class_name}-{vt_symbol}"
             if strategy_class_name not in self.cta_engine.get_all_strategy_class_names():
-                self.logger().critical(f"目标策略 {strategy_class_name} 不在策略列表中:{self.cta_engine.get_all_strategy_class_names()}")
+                self.logger().critical(
+                    f"目标策略 {strategy_class_name} 不在策略列表中:{self.cta_engine.get_all_strategy_class_names()}")
                 return
             self.logger().info(f"[执行]添加策略 {strategy_name}")
             self.cta_engine.add_strategy(strategy_class_name, strategy_name, vt_symbol, {})
+
             # CtaEngine.load_bar requires a callback, but I did not find its usage in vnpy source code
             def do_nothing(param) -> None:
                 pass
+
             self.cta_engine.load_bar(vt_symbol=vt_symbol, days=10, interval=Interval.MINUTE, callback=do_nothing,
                                      use_database=False)
             self.logger().info(f"正在启动策略 {strategy_name}")
