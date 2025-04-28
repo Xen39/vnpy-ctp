@@ -146,8 +146,9 @@ class CtpSession:
         return result
 
     def close(self):
-        self._logger.info("关闭连接！")
-        return self.main_engine.close()
+        if self.main_engine is not None:
+            self._logger.info("关闭连接！")
+            self.main_engine.close()
 
     def get_history_orders(self):
         result = self.oms_engine.get_all_orders()
