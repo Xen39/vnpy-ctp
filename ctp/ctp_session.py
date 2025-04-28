@@ -48,19 +48,19 @@ class CtpSession:
         self.event_engine.register(EVENT_POSITION, self._on_position)
 
     def _on_tick(self, event: Event) -> None:
-        self._logger.debug(f"[回调]行情: {event.data}")
+        self.logger().debug(f"[回调]行情: {event.data}")
 
     def _on_trade(self, event: Event) -> None:
-        self._logger.info(f"[回调]成交: {event.data}")
+        self.logger().info(f"[回调]成交: {event.data}")
 
     def _on_order(self, event: Event) -> None:
-        self._logger.info(f"[回调]订单: {event.data}")
+        self.logger().info(f"[回调]订单: {event.data}")
 
     def _on_account(self, event: Event) -> None:
-        self._logger.debug(f"[回调]账户: {event.data}")
+        self.logger().debug(f"[回调]账户: {event.data}")
 
     def _on_position(self, event: Event) -> None:
-        self._logger.debug(f"[回调]持仓: {event.data}")
+        self.logger().debug(f"[回调]持仓: {event.data}")
 
     def read_config(self, ini_filepath: str = "config.ini") -> None:
         parser = configparser.ConfigParser()
@@ -71,7 +71,7 @@ class CtpSession:
                           file_level=parser.getint("log", "file_level", fallback=logging.DEBUG),
                           console_level=parser.getint("log", "console_level", fallback=logging.INFO),
                           encoding=parser.get("log", "encoding", fallback="utf-8"))
-        self._logger.info(f"正在读取配置文件: {abs_filepath}")
+        self.logger().info(f"正在读取配置文件: {abs_filepath}")
 
     def _init_logger(self, log_dir: str, file_level: int, console_level: int, encoding: str) -> None:
         log_filename = f"ctp-{datetime.now().strftime('%Y%m%d-%H%M%S')}.log.txt"
@@ -85,7 +85,7 @@ class CtpSession:
         log_filepath = os.path.join(log_dir, log_filename)
 
         self._logger = logging.getLogger(__name__)
-        self._logger.setLevel(logging.DEBUG)
+        self.logger().setLevel(logging.DEBUG)
 
         console_handler = logging.StreamHandler()
         console_handler.setLevel(console_level)
@@ -97,12 +97,15 @@ class CtpSession:
         console_handler.setFormatter(formatter)
         file_handler.setFormatter(formatter)
 
-        self._logger.addHandler(console_handler)
-        self._logger.addHandler(file_handler)
+        self.logger().addHandler(console_handler)
+        self.logger().addHandler(file_handler)
+
+    def logger(self):
+        return self._logger
 
     def connect(self):
         self.main_engine.add_gateway(CtpGateway)
-        self._logger.info(
+        self.logger().info(
             f"正在连接至CTP, 交易服务器 {self.conn_settings['交易服务器']}, 行情服务器 {self.conn_settings['行情服务器']}")
         self.main_engine.connect(self.conn_settings, "CTP")
 
@@ -118,45 +121,45 @@ class CtpSession:
         return pretty_str.strip()
 
     def send_order(self, req: OrderRequest):
-        self._logger.info(f"[执行]下单：{vars(req)}")
+        self.logger().info(f"[执行]下单：{vars(req)}")
         return self.main_engine.send_order(req, "CTP")
 
     def cancel_order(self, req: CancelRequest):
-        self._logger.info(f"[执行]撤单：{vars(req)}")
+        self.logger().info(f"[执行]撤单：{vars(req)}")
         return self.main_engine.cancel_order(req, "CTP")
 
     def get_all_exchanges(self):
         result = self.main_engine.get_all_exchanges()
-        self._logger.info(f"[执行]查询交易所: {result}")
+        self.logger().info(f"[执行]查询交易所: {result}")
         return result
 
     def get_all_accounts(self):
         result = self.oms_engine.get_all_accounts()
-        self._logger.info(f"[执行]查询账户: {result}")
+        self.logger().info(f"[执行]查询账户: {result}")
         return result
 
     def get_all_positions(self):
         result = self.oms_engine.get_all_positions()
-        self._logger.info(f"[执行]查询持仓: {result}")
+        self.logger().info(f"[执行]查询持仓: {result}")
         return result
 
     def query_contract(self, symbol: str, exchange: Exchange):
         result = self.oms_engine.get_tick(f"{symbol}.{exchange.value}")
-        self._logger.debug(f"[执行]查询合约: {symbol}.{exchange.value}: {result}")
+        self.logger().debug(f"[执行]查询合约: {symbol}.{exchange.value}: {result}")
         return result
 
     def close(self):
         if self.main_engine is not None:
-            self._logger.info("关闭连接！")
+            self.logger().info("关闭连接！")
             self.main_engine.close()
 
     def get_history_orders(self):
         result = self.oms_engine.get_all_orders()
-        self._logger.info(f"[执行]查询历史订单: {result}")
+        self.logger().info(f"[执行]查询历史订单: {result}")
         return result
 
     def subscribe(self, symbol: str, exchange: Exchange):
-        self._logger.info(f"[执行]订阅行情: {symbol}.{exchange.value}")
+        self.logger().info(f"[执行]订阅行情: {symbol}.{exchange.value}")
         return self.main_engine.subscribe(SubscribeRequest(symbol=symbol, exchange=exchange), "CTP")
 
     def input_strategy_class_name(self) -> str:
@@ -172,15 +175,15 @@ class CtpSession:
         for vt_symbol in vt_symbols:
             strategy_name = f"{strategy_class_name}-{vt_symbol}"
             if strategy_class_name not in self.cta_engine.get_all_strategy_class_names():
-                self._logger.critical(f"目标策略 {strategy_class_name} 不在策略列表中:{self.cta_engine.get_all_strategy_class_names()}")
+                self.logger().critical(f"目标策略 {strategy_class_name} 不在策略列表中:{self.cta_engine.get_all_strategy_class_names()}")
                 return
-            self._logger.info(f"[执行]添加策略 {strategy_name}")
+            self.logger().info(f"[执行]添加策略 {strategy_name}")
             self.cta_engine.add_strategy(strategy_class_name, strategy_name, vt_symbol, {})
             # CtaEngine.load_bar requires a callback, but I did not find its usage in vnpy source code
             def do_nothing(param) -> None:
                 pass
             self.cta_engine.load_bar(vt_symbol=vt_symbol, days=10, interval=Interval.MINUTE, callback=do_nothing,
                                      use_database=False)
-            self._logger.info(f"正在启动策略 {strategy_name}")
+            self.logger().info(f"正在启动策略 {strategy_name}")
             self.cta_engine.init_strategy(strategy_name)
             self.cta_engine.start_strategy(strategy_name)
