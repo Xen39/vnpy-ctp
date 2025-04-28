@@ -22,6 +22,7 @@ class CtpSession:
     main_engine: MainEngine
     oms_engine: OmsEngine
     cta_engine: CtaEngine
+    ctp_gateway: CtpGateway
     conn_settings: dict
     _logger: logging.Logger
 
@@ -104,7 +105,7 @@ class CtpSession:
         return self._logger
 
     def connect(self):
-        self.main_engine.add_gateway(CtpGateway)
+        self.ctp_gateway = self.main_engine.add_gateway(CtpGateway)
         self.logger().info(
             f"正在连接至CTP, 交易服务器 {self.conn_settings['交易服务器']}, 行情服务器 {self.conn_settings['行情服务器']}")
         self.main_engine.connect(self.conn_settings, "CTP")
