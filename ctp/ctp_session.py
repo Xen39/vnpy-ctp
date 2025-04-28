@@ -170,17 +170,17 @@ class CtpSession:
         if not isinstance(vt_symbols, list):
             vt_symbols = [vt_symbols]
         for vt_symbol in vt_symbols:
-            strategy_symbol_name = f"{strategy_class_name}-{vt_symbol}"
+            strategy_name = f"{strategy_class_name}-{vt_symbol}"
             if strategy_class_name not in self.cta_engine.get_all_strategy_class_names():
                 self._logger.critical(f"目标策略 {strategy_class_name} 不在策略列表中:{self.cta_engine.get_all_strategy_class_names()}")
                 return
-            self._logger.info(f"[执行]添加策略 {strategy_symbol_name}")
-            self.cta_engine.add_strategy(strategy_class_name, strategy_symbol_name, vt_symbol, {})
+            self._logger.info(f"[执行]添加策略 {strategy_name}")
+            self.cta_engine.add_strategy(strategy_class_name, strategy_name, vt_symbol, {})
             # CtaEngine.load_bar requires a callback, but I did not find its usage in vnpy source code
             def do_nothing(param) -> None:
                 pass
             self.cta_engine.load_bar(vt_symbol=vt_symbol, days=10, interval=Interval.MINUTE, callback=do_nothing,
                                      use_database=False)
-        self._logger.info("正在启动策略...")
-        self.cta_engine.init_all_strategies()
-        self.cta_engine.start_all_strategies()
+            self._logger.info(f"正在启动策略 {strategy_name}")
+            self.cta_engine.init_strategy(strategy_name)
+            self.cta_engine.start_strategy(strategy_name)
