@@ -7,11 +7,19 @@ from vnpy.trader.object import Exchange
 
 def input_vt_symbol() -> str:
     def is_valid_vt_symbol(vt_symbol: str) -> bool:
-        vt_pattern = re.compile(r"[a-zA-Z0-9]+\.[A-Z]+")
+        vt_pattern = re.compile(r"^[a-zA-Z0-9]+\.[A-Z]+$")
         return vt_pattern.match(vt_symbol) is not None
+    exchanges = {x.value for x in Exchange}
     vt_symbol = input("请输入 <合约代码>.<交易所代码>:")
-    while not is_valid_vt_symbol(vt_symbol):
-        vt_symbol = input("输入非法！请重新输入 <合约代码>.<交易所代码>:")
+    while True:
+        if not is_valid_vt_symbol(vt_symbol):
+            vt_symbol = input("输入非法！请重新输入 <合约代码>.<交易所代码>:")
+        else:
+            exchange = vt_symbol.split(".")[1]
+            if exchange not in exchanges:
+                vt_symbol = input("交易所不存在！请重新输入 <合约代码>.<交易所代码>:")
+            else:
+                break
     return vt_symbol
 
 def input_symbol_exchange() -> tuple[str, Exchange]:
