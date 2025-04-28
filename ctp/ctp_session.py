@@ -125,11 +125,13 @@ class CtpSession:
         return pretty_str.strip()
 
     def send_order(self, req: OrderRequest):
-        self.logger().info(f"[执行]下单：{vars(req)}")
+        self.logger().info(f"[执行]下单:{vars(req)}")
+        if not self.is_existed_vt_symbol(req.vt_symbol):
+            self.logger().warning(f"合约{req.vt_symbol}不在交易列表中!")
         return self.main_engine.send_order(req, "CTP")
 
     def cancel_order(self, req: CancelRequest):
-        self.logger().info(f"[执行]撤单：{vars(req)}")
+        self.logger().info(f"[执行]撤单:{vars(req)}")
         return self.main_engine.cancel_order(req, "CTP")
 
     def get_all_exchanges(self):
@@ -166,6 +168,9 @@ class CtpSession:
         self.logger().info(f"[执行]订阅行情: {symbol}.{exchange.value}")
         return self.main_engine.subscribe(SubscribeRequest(symbol=symbol, exchange=exchange), "CTP")
 
+    def is_existed_vt_symbol(self, vt_symbol: str) -> bool:
+        return vt_symbol in {c.vt_symbol for c  in self.get_all_contracts()}
+
     def input_strategy_class_name(self) -> str:
         strategy_dict = {i: name for i, name in enumerate(self.cta_engine.get_all_strategy_class_names())}
         for i, strategy_class_name in strategy_dict.items():
@@ -182,6 +187,9 @@ class CtpSession:
                 self.logger().critical(
                     f"目标策略 {strategy_class_name} 不在策略列表中:{self.cta_engine.get_all_strategy_class_names()}")
                 return
+            if not self.is_existed_vt_symbol(vt_symbol):
+                self.logger().warning(f"合约 {vt_symbol} 不在交易列表中,跳过策略{strategy_name}")
+                continue
             self.logger().info(f"[执行]添加策略 {strategy_name}")
             self.cta_engine.add_strategy(strategy_class_name, strategy_name, vt_symbol, {})
 
