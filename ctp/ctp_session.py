@@ -65,9 +65,9 @@ class CtpSession:
         parser.read(abs_filepath, encoding="utf-8")
         self.conn_settings = {item[0]: item[1] for item in parser.items("connection")}
         self._init_logger(log_dir=parser.get("log", "output_dir", fallback="../log"),
-                          file_level=parser.getint("log", "file_level",fallback=logging.DEBUG),
+                          file_level=parser.getint("log", "file_level", fallback=logging.DEBUG),
                           console_level=parser.getint("log", "console_level", fallback=logging.INFO),
-                          encoding=parser.get("log", "encoding",fallback="utf-8"))
+                          encoding=parser.get("log", "encoding", fallback="utf-8"))
         self._logger.info(f"正在读取配置文件: {abs_filepath}")
 
     def _init_logger(self, log_dir: str, file_level: int, console_level: int, encoding: str) -> None:
@@ -79,7 +79,7 @@ class CtpSession:
             print(f"日志输出目录 {log_dir} 已存在且不为文件夹", file=sys.stderr)
             exit(0)
 
-        log_filepath=os.path.join(log_dir, log_filename)
+        log_filepath = os.path.join(log_dir, log_filename)
 
         self._logger = logging.getLogger(__name__)
         self._logger.setLevel(logging.DEBUG)
@@ -93,7 +93,6 @@ class CtpSession:
         formatter = logging.Formatter('%(asctime)s [%(levelname)s]: %(message)s')
         console_handler.setFormatter(formatter)
         file_handler.setFormatter(formatter)
-
 
         self._logger.addHandler(console_handler)
         self._logger.addHandler(file_handler)
@@ -111,7 +110,7 @@ class CtpSession:
         contracts = self.get_all_contracts()
         pretty_str = ""
         for i in range(0, len(contracts), step):
-            pretty_str += "|| ".join(f"{c.symbol:15} {c.exchange.value:6}" for c in contracts[i:i+step])
+            pretty_str += "|| ".join(f"{c.symbol:15} {c.exchange.value:6}" for c in contracts[i:i + step])
             pretty_str += "\n"
         return pretty_str.strip()
 
@@ -138,7 +137,7 @@ class CtpSession:
         self._logger.info(f"[执行]查询持仓: {result}")
         return result
 
-    def query_contract(self, symbol: str, exchange:Exchange):
+    def query_contract(self, symbol: str, exchange: Exchange):
         result = self.oms_engine.get_tick(f"{symbol}.{exchange.value}")
         self._logger.debug(f"[执行]查询合约: {symbol}.{exchange.value}: {result}")
         return result
@@ -156,7 +155,7 @@ class CtpSession:
         self._logger.info(f"[执行]订阅行情: {symbol}.{exchange.value}")
         return self.main_engine.subscribe(SubscribeRequest(symbol=symbol, exchange=exchange), "CTP")
 
-    def add_strategy(self, strategy_class, vt_symbols):
+    def add_strategy(self, strategy_class, vt_symbols: str | list):
         if not isinstance(vt_symbols, list):
             vt_symbols = [vt_symbols]
         for vt_symbol in vt_symbols:
@@ -174,5 +173,7 @@ class CtpSession:
             # CtaEngine.load_bar requires a callback, but I did not find its usage in vnpy source code
             def do_nothing(param) -> None:
                 pass
-            self.cta_engine.load_bar(vt_symbol=vt_symbol, days=10, interval=Interval.MINUTE, callback=do_nothing, use_database=False)
+            self.cta_engine.load_bar(vt_symbol=vt_symbol, days=10, interval=Interval.MINUTE, callback=do_nothing,
+                                     use_database=False)
+            self._logger.info(f"启动策略 {strategy_symbol_name}")
             self.cta_engine.start_strategy(strategy_symbol_name)
