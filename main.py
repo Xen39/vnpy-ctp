@@ -21,7 +21,8 @@ if __name__ == "__main__":
     print("合约列表：")
     print(session.get_all_contracts_pretty_str())
     while True:
-        op = input("1(查询合约列表) 2(查询行情+下单) 3(撤单) 4(查询历史订单) 5(订阅行情) 6(添加策略) q(退出) 请输入操作: ").strip()
+        time.sleep(1)
+        op = input("1(查询合约列表) 2(查询行情+下单) 3(撤单) 4(查询历史订单) 5(订阅行情) 6(添加策略) 7(查询资金账户) q(退出) 请输入操作: ").strip()
         if op == "1":
             print(session.get_all_contracts_pretty_str())
         elif op == "2":
@@ -56,6 +57,8 @@ if __name__ == "__main__":
             session.subscribe(*input_symbol_exchange())
         elif op == "6":
             session.add_strategy(session.input_strategy_class_name(), input_vt_symbol())
+        elif op == "7":
+            session.get_all_accounts()
         elif op == "q":
             session.close()
             print("程序退出！")
