@@ -55,7 +55,6 @@ if __name__ == "__main__":
         elif op == "5":
             session.subscribe(*input_symbol_exchange())
         elif op == "6":
-            symbol, exchange = input_symbol_exchange()
             session.add_strategy(input_strategy(), input_vt_symbol())
         elif op == "q":
             session.close()
