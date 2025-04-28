@@ -1,12 +1,9 @@
-__all__ = ["input_vt_symbol", "input_symbol_exchange", "input_price_volume", "input_int", "input_strategy"]
+__all__ = ["input_vt_symbol", "input_symbol_exchange", "input_price_volume", "input_int"]
 
 import re
 import sys
 
 from vnpy.trader.object import Exchange
-
-from strategy.MACD import MACDStrategy
-
 
 def input_vt_symbol() -> str:
     def is_valid_vt_symbol(vt_symbol: str) -> bool:
@@ -45,11 +42,3 @@ def input_int(min:int, max:int) -> int:
             continue
 
     return ret
-
-def input_strategy():
-    strategy_dict = {
-        1 : MACDStrategy,
-    }
-    for k,v in sorted(list(strategy_dict.items())):
-        print(f"{k}: {v.__name__}")
-    return strategy_dict[input_int(1,1)]

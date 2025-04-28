@@ -1,16 +1,16 @@
 import sys
 import time
 
+from logging import INFO
 from vnpy.trader.setting import SETTINGS
 from vnpy.trader.object import *
-from logging import INFO
+
 from ctp.ctp_session import CtpSession
 from ctp.input import *
 
 SETTINGS["log.active"] = True
 SETTINGS["log.level"] = INFO
 SETTINGS["log.console"] = True
-
 
 if __name__ == "__main__":
     session = CtpSession()
@@ -55,7 +55,7 @@ if __name__ == "__main__":
         elif op == "5":
             session.subscribe(*input_symbol_exchange())
         elif op == "6":
-            session.add_strategy(input_strategy(), input_vt_symbol())
+            session.add_strategy(session.input_strategy_class_name(), input_vt_symbol())
         elif op == "q":
             session.close()
             print("程序退出！")

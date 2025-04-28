@@ -15,8 +15,7 @@ from vnpy.trader.object import *
 from vnpy_ctastrategy import CtaEngine, CtaStrategyApp
 from vnpy_ctp import CtpGateway
 
-from strategy.MACD import MACDStrategy
-
+from .input import input_int
 
 class CtpSession:
     event_engine: EventEngine
@@ -29,6 +28,10 @@ class CtpSession:
     def __init__(self):
         self._init_engines()
         self._register_events()
+        # load our own strategy
+        strategy_dir = os.path.join(__file__, "../../strategy/")
+        for strategy_filepath in os.listdir(strategy_dir):
+            self.cta_engine.load_strategy_class_from_module(f"strategy.{strategy_filepath.rstrip('.py')}")
 
     def _init_engines(self) -> None:
         self.event_engine = EventEngine()
@@ -155,25 +158,28 @@ class CtpSession:
         self._logger.info(f"[执行]订阅行情: {symbol}.{exchange.value}")
         return self.main_engine.subscribe(SubscribeRequest(symbol=symbol, exchange=exchange), "CTP")
 
-    def add_strategy(self, strategy_class, vt_symbols: str | list):
+    def input_strategy_class_name(self) -> str:
+        strategy_dict = {i: name for i, name in enumerate(self.cta_engine.get_all_strategy_class_names())}
+        for i, strategy_class_name in strategy_dict.items():
+            print(f"{i}: {strategy_class_name}")
+        idx = input_int(0, len(strategy_dict)- 1)
+        return strategy_dict[idx]
+
+    def add_strategy(self, strategy_class_name: str, vt_symbols: str | list) -> None:
         if not isinstance(vt_symbols, list):
             vt_symbols = [vt_symbols]
         for vt_symbol in vt_symbols:
-            strategy_class_name = strategy_class.__name__
             strategy_symbol_name = f"{strategy_class_name}-{vt_symbols}"
-            if strategy_class == MACDStrategy:
-                setting = {
-                    "fast_period": 12,
-                    "slow_period": 26,
-                    "signal_period": 9
-                }
-                self.cta_engine.add_strategy(strategy_class_name, strategy_symbol_name, vt_symbol, setting)
-            else:
-                self._logger.error(f"非法策略: {strategy_class}")
+            if strategy_class_name not in self.cta_engine.get_all_strategy_class_names():
+                self._logger.critical(f"目标策略 {strategy_class_name} 不在策略列表中:{self.cta_engine.get_all_strategy_class_names()}")
+                return
+            self._logger.info(f"[执行]添加策略 {strategy_symbol_name}")
+            self.cta_engine.add_strategy(strategy_class_name, strategy_symbol_name, vt_symbol, {})
             # CtaEngine.load_bar requires a callback, but I did not find its usage in vnpy source code
             def do_nothing(param) -> None:
                 pass
             self.cta_engine.load_bar(vt_symbol=vt_symbol, days=10, interval=Interval.MINUTE, callback=do_nothing,
                                      use_database=False)
-            self._logger.info(f"启动策略 {strategy_symbol_name}")
-            self.cta_engine.start_strategy(strategy_symbol_name)
+        self._logger.info("正在启动策略...")
+        self.cta_engine.init_all_strategies()
+        self.cta_engine.start_all_strategies()
