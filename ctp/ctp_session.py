@@ -169,7 +169,7 @@ class CtpSession:
         if not isinstance(vt_symbols, list):
             vt_symbols = [vt_symbols]
         for vt_symbol in vt_symbols:
-            strategy_symbol_name = f"{strategy_class_name}-{vt_symbols}"
+            strategy_symbol_name = f"{strategy_class_name}-{vt_symbol}"
             if strategy_class_name not in self.cta_engine.get_all_strategy_class_names():
                 self._logger.critical(f"目标策略 {strategy_class_name} 不在策略列表中:{self.cta_engine.get_all_strategy_class_names()}")
                 return
