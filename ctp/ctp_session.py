@@ -119,7 +119,8 @@ class CtpSession:
         contracts = self.get_all_contracts()
         pretty_str = ""
         for i in range(0, len(contracts), step):
-            pretty_str += "|| ".join(f"{c.symbol:15} {c.exchange.value:6}" for c in contracts[i:i + step])
+            pretty_str += "| ".join(
+                f"{f'{c.symbol}.{c.exchange.value}':20} {c.product.value:4}" for c in contracts[i:i + step])
             pretty_str += "\n"
         return pretty_str.strip()
 
