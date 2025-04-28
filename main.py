@@ -7,6 +7,7 @@ from vnpy.trader.object import *
 
 from ctp.ctp_session import CtpSession
 from ctp.input import *
+from ctp.output import *
 
 SETTINGS["log.active"] = True
 SETTINGS["log.level"] = INFO
@@ -32,7 +33,7 @@ if __name__ == "__main__":
                 if contract is None:
                     print("该行情未订阅，订阅后才能获取最新行情")
                 else:
-                    print(f"最近一次回调行情:{contract}")
+                    print(f"最近一次回调行情:{to_string(contract)}")
                 while True:
                     side = input("请输入方向(0买多,1卖多,2买空,3卖空,q退出):")
                     if side in ("0", "1", "2", "3"):
