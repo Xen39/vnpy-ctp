@@ -17,8 +17,7 @@ if __name__ == "__main__":
     session.read_config()
     session.connect()
     time.sleep(5)
-    print("等待连接结束")
-    print("合约列表：")
+    print("合约列表:")
     print(session.get_all_contracts_pretty_str())
     while True:
         time.sleep(1)
