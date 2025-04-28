@@ -36,7 +36,9 @@ def input_int(min:int, max:int) -> int:
     while True:
         try:
             ret = int(input("请输入数字:"))
-            if ret < min or ret > max:
+            if min <= ret <= max:
+                break
+            else:
                 print(f"输入超出范围[{min},{max}])", file=sys.stderr)
                 continue
         except ValueError:
