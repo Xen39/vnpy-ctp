@@ -13,6 +13,7 @@ from vnpy.trader.event import *
 from vnpy.trader.engine import MainEngine, OmsEngine
 from vnpy.trader.object import *
 from vnpy_ctastrategy import CtaEngine, CtaStrategyApp
+from vnpy_ctastrategy.base import EVENT_CTA_STRATEGY
 from vnpy_ctp import CtpGateway
 
 from .input import input_int
@@ -49,6 +50,8 @@ class CtpSession:
         self.event_engine.register(EVENT_ORDER, self._on_order)
         self.event_engine.register(EVENT_ACCOUNT, self._on_account)
         self.event_engine.register(EVENT_POSITION, self._on_position)
+        self.event_engine.register(EVENT_CTA_STRATEGY, self._on_strategy)
+        self.event_engine.register(EVENT_LOG, self._on_log)
 
     def _on_tick(self, event: Event) -> None:
         self.logger().debug(f"[回调]行情: {to_string(event.data)}")
@@ -64,6 +67,22 @@ class CtpSession:
 
     def _on_position(self, event: Event) -> None:
         self.logger().debug(f"[回调]持仓: {to_string(event.data)}")
+
+    def _on_strategy(self, event: Event) -> None:
+        self.logger().info(f"[回调]策略: {to_string(event.data)}")
+
+    def _on_log(self, event) -> None:
+        data : LogData = event.data
+        if data.level == logging.DEBUG:
+            self.logger().debug(data.msg)
+        elif data.level == logging.INFO:
+            self.logger().info(data.msg)
+        elif data.level == logging.WARNING:
+            self.logger().warning(data.msg)
+        elif data.level == logging.ERROR:
+            self.logger().error(data.msg)
+        elif data.level == logging.CRITICAL:
+            self.logger().critical(data.msg)
 
     def read_config(self, ini_filepath: str = "config.ini") -> None:
         parser = configparser.ConfigParser()
