@@ -72,7 +72,7 @@ class CtpSession:
         self.logger().info(f"[回调]策略: {to_string(event.data)}")
 
     def _on_log(self, event) -> None:
-        data : LogData = event.data
+        data: LogData = event.data
         if data.level == logging.DEBUG:
             self.logger().debug(data.msg)
         elif data.level == logging.INFO:
@@ -188,7 +188,7 @@ class CtpSession:
         return self.main_engine.subscribe(SubscribeRequest(symbol=symbol, exchange=exchange), "CTP")
 
     def is_existed_vt_symbol(self, vt_symbol: str) -> bool:
-        return vt_symbol in {c.vt_symbol for c  in self.get_all_contracts()}
+        return vt_symbol in {c.vt_symbol for c in self.get_all_contracts()}
 
     def input_strategy_class_name(self) -> str:
         strategy_dict = {i: name for i, name in enumerate(self.cta_engine.get_all_strategy_class_names())}
@@ -198,29 +198,24 @@ class CtpSession:
         return strategy_dict[idx]
 
     def add_strategy(self, strategy_class_name: str, vt_symbols: str | list) -> None:
+        if strategy_class_name not in self.cta_engine.get_all_strategy_class_names():
+            self.logger().critical(
+                f"目标策略 {strategy_class_name} 不在策略列表中:{self.cta_engine.get_all_strategy_class_names()}")
+            return
         if not isinstance(vt_symbols, list):
+            assert isinstance(vt_symbols, str)
             vt_symbols = [vt_symbols]
         for vt_symbol in vt_symbols:
             strategy_name = f"{strategy_class_name}-{vt_symbol}"
-            if strategy_class_name not in self.cta_engine.get_all_strategy_class_names():
-                self.logger().critical(
-                    f"目标策略 {strategy_class_name} 不在策略列表中:{self.cta_engine.get_all_strategy_class_names()}")
-                return
             if not self.is_existed_vt_symbol(vt_symbol):
                 self.logger().warning(f"合约 {vt_symbol} 不在交易列表中,跳过策略{strategy_name}")
                 continue
             self.logger().info(f"[执行]添加策略 {strategy_name}")
             self.cta_engine.add_strategy(strategy_class_name, strategy_name, vt_symbol, {})
 
-            # CtaEngine.load_bar requires a callback, but I did not find its usage in vnpy source code
-            def do_nothing(param) -> None:
-                pass
-
-            self.cta_engine.load_bar(vt_symbol=vt_symbol, days=10, interval=Interval.MINUTE, callback=do_nothing,
-                                     use_database=False)
             self.logger().info(f"正在启动策略 {strategy_name}")
             self.cta_engine.init_strategy(strategy_name)
-            self.cta_engine.start_strategy(strategy_name)
+        self.cta_engine.start_all_strategies()
 
     def get_all_strategy_names(self) -> list[str]:
         return list(self.cta_engine.strategies.keys())
