@@ -25,8 +25,7 @@ if __name__ == "__main__":
             if op == "1":
                 print(session.get_all_contracts_pretty_str())
             elif op == "2":
-                symbol, exchange = input_symbol_exchange()
-                contract = session.query_contract(symbol, exchange)
+                contract = session.get_tick(input_vt_symbol())
                 if contract is None:
                     print("该行情未订阅，订阅后才能获取最新行情")
                 else:

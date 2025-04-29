@@ -149,9 +149,9 @@ class CtpSession:
         self.logger().info(f"[执行]查询持仓: {to_string(result)}")
         return result
 
-    def query_contract(self, symbol: str, exchange: Exchange):
-        result = self.oms_engine.get_tick(f"{symbol}.{exchange.value}")
-        self.logger().debug(f"[执行]查询合约: {symbol}.{exchange.value}: {to_string(result)}")
+    def get_tick(self, vt_symbol: str):
+        result = self.oms_engine.get_tick(vt_symbol)
+        self.logger().debug(f"[执行]查询合约: {vt_symbol}: {to_string(result)}")
         return result
 
     def close(self):
