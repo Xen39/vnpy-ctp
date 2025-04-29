@@ -2,16 +2,17 @@ __all__ = [
     "CtpSession"
 ]
 
-import datetime
-import os
-import logging
 import configparser
+import datetime
+import logging
+import os
 import sys
 
 from vnpy.event import EventEngine, Event
 from vnpy.trader.event import *
 from vnpy.trader.engine import MainEngine, OmsEngine
 from vnpy.trader.object import *
+from vnpy.trader.setting import SETTINGS
 from vnpy_ctastrategy import CtaEngine, CtaStrategyApp
 from vnpy_ctastrategy.base import EVENT_CTA_STRATEGY
 from vnpy_ctp import CtpGateway
@@ -19,6 +20,9 @@ from vnpy_ctp import CtpGateway
 from .input import input_int
 from .output import to_string
 
+SETTINGS["log.active"] = True
+SETTINGS["log.level"] = logging.DEBUG
+SETTINGS["log.console"] = False
 
 class CtpSession:
     event_engine: EventEngine
@@ -87,13 +91,22 @@ class CtpSession:
     def read_config(self, ini_filepath: str = "config.ini") -> None:
         parser = configparser.ConfigParser()
         abs_filepath = os.path.join(os.path.dirname(os.path.abspath(__file__)), ini_filepath)
+        if not os.path.exists(abs_filepath):
+            print(f"配置文件 {ini_filepath} 不存在!", file=sys.stderr)
+            exit(0)
         parser.read(abs_filepath, encoding="utf-8")
         self.conn_settings = {item[0]: item[1] for item in parser.items("connection")}
         self._init_logger(log_dir=parser.get("log", "output_dir", fallback="../log"),
                           file_level=parser.getint("log", "file_level", fallback=logging.DEBUG),
                           console_level=parser.getint("log", "console_level", fallback=logging.INFO),
                           encoding=parser.get("log", "encoding", fallback="utf-8"))
-        self.logger().info(f"正在读取配置文件: {abs_filepath}")
+        self.logger().info(f"读取配置文件: {abs_filepath}")
+        if not parser.has_section("datafeed"):
+            self.logger().warning("配置文件中未找到[datafeed]数据服务,无法提供历史行情")
+        else:
+            self._init_datafeed(platform=parser.get("datafeed", "platform", fallback=""),
+                                username=parser.get("datafeed", "username", fallback=""),
+                                password=parser.get("datafeed", "password", fallback=""))
 
     def _init_logger(self, log_dir: str, file_level: int, console_level: int, encoding: str) -> None:
         log_filename = f"ctp-{datetime.now().strftime('%Y%m%d-%H%M%S')}.log.txt"
@@ -121,6 +134,12 @@ class CtpSession:
 
         self.logger().addHandler(console_handler)
         self.logger().addHandler(file_handler)
+
+    def _init_datafeed(self, platform, username, password) -> None:
+        self.logger().info(f"加载数据服务[datafeed]: {username}@{platform}")
+        SETTINGS["datefeed.name"] = platform
+        SETTINGS["datefeed.username"] = username
+        SETTINGS["datefeed.password"] = password
 
     def logger(self):
         return self._logger

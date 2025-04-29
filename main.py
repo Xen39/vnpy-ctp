@@ -1,17 +1,10 @@
 import sys
 import time
 
-from logging import INFO
-from vnpy.trader.setting import SETTINGS
-from vnpy.trader.object import *
-
 from ctp.ctp_session import CtpSession
 from ctp.input import *
 from ctp.output import *
 
-SETTINGS["log.active"] = True
-SETTINGS["log.level"] = INFO
-SETTINGS["log.console"] = True
 
 if __name__ == "__main__":
     session = CtpSession()
