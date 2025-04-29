@@ -137,9 +137,9 @@ class CtpSession:
 
     def _init_datafeed(self, platform, username, password) -> None:
         self.logger().info(f"加载数据服务[datafeed]: {username}@{platform}")
-        SETTINGS["datefeed.name"] = platform
-        SETTINGS["datefeed.username"] = username
-        SETTINGS["datefeed.password"] = password
+        SETTINGS["datafeed.name"] = platform
+        SETTINGS["datafeed.username"] = username
+        SETTINGS["datafeed.password"] = password
 
     def logger(self):
         return self._logger
