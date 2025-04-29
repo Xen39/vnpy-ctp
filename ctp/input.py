@@ -7,7 +7,7 @@ from vnpy.trader.object import Exchange
 
 def input_vt_symbol() -> str:
     def is_valid_vt_symbol(vt_symbol: str) -> bool:
-        vt_pattern = re.compile(r"^[a-zA-Z0-9]+\.[A-Z]+$")
+        vt_pattern = re.compile(r"^[a-zA-Z0-9-]+\.[A-Z]+$")
         return vt_pattern.match(vt_symbol) is not None
     exchanges = {x.value for x in Exchange}
     vt_symbol = input("请输入 <合约代码>.<交易所代码>:")
