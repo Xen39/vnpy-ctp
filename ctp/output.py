@@ -1,3 +1,5 @@
+import datetime
+
 from vnpy.trader.object import *
 from enum import Enum
 
@@ -7,7 +9,7 @@ def to_string(obj) -> str:
         return "是" if obj else "否"
     elif isinstance(obj, Enum):
         return obj.value
-    elif isinstance(obj, datetime):
+    elif isinstance(obj, datetime.datetime):
         return obj.strftime("%Y-%m-%d %H:%M:%S")
     elif isinstance(obj, list):
         return [to_string(x) for x in obj].__str__()

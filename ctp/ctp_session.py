@@ -109,7 +109,7 @@ class CtpSession:
                                 password=parser.get("datafeed", "password", fallback=""))
 
     def _init_logger(self, log_dir: str, file_level: int, console_level: int, encoding: str) -> None:
-        log_filename = f"ctp-{datetime.now().strftime('%Y%m%d-%H%M%S')}.log.txt"
+        log_filename = f"ctp-{datetime.datetime.now().strftime('%Y%m%d-%H%M%S')}.log.txt"
         log_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), log_dir)
         if not os.path.exists(log_dir):
             os.mkdir(log_dir)
