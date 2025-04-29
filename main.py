@@ -31,20 +31,18 @@ if __name__ == "__main__":
                     print("该行情未订阅，订阅后才能获取最新行情")
                 else:
                     print(f"最近一次回调行情:{to_string(contract)}")
-                while True:
-                    side = input("请输入方向(0买多,1卖多,2买空,3卖空,q退出):")
-                    if side in ("0", "1", "2", "3"):
-                        direction: Direction = Direction.LONG if side in ("0", "1") else Direction.SHORT
-                        offset: Offset = Offset.OPEN if side in ("0", "2") else Offset.CLOSE
-                        price, volume = input_price_volume()
-                        req = OrderRequest(symbol=symbol, exchange=exchange, direction=direction, type=OrderType.LIMIT,
-                                           volume=volume, price=price, offset=offset)
-                        session.send_order(req)
-                    elif side == "q":
-                        break
-                    else:
-                        print("非法输入！", file=sys.stderr)
-                        continue
+                side = input("请输入方向(0买多,1卖多,2买空,3卖空,q退出):")
+                if side in ("0", "1", "2", "3"):
+                    direction: Direction = Direction.LONG if side in ("0", "1") else Direction.SHORT
+                    offset: Offset = Offset.OPEN if side in ("0", "2") else Offset.CLOSE
+                    price, volume = input_price_volume()
+                    req = OrderRequest(symbol=symbol, exchange=exchange, direction=direction, type=OrderType.LIMIT,
+                                       volume=volume, price=price, offset=offset)
+                    session.send_order(req)
+                elif side == "q":
+                    continue
+                else:
+                    pass
             elif op == "3":
                 order_id = input("请输入订单号：")
                 symbol, exchange = input_symbol_exchange()
