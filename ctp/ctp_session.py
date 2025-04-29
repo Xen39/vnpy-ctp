@@ -219,3 +219,12 @@ class CtpSession:
 
     def get_all_strategy_names(self) -> list[str]:
         return list(self.cta_engine.strategies.keys())
+
+    def stop_strategy(self, strategy_names: list[str]):
+        self.logger().info(f"[执行]停止策略:{strategy_names}")
+        for strategy_name in strategy_names:
+            if strategy_name not in self.cta_engine.strategies:
+                self.logger().warning(f"目标停止策略{strategy_name}不存在!")
+                return
+            else:
+                self.cta_engine.stop_strategy(strategy_name)
