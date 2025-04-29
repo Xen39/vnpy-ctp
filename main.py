@@ -21,7 +21,7 @@ if __name__ == "__main__":
     try:
         while True:
             time.sleep(1)
-            op = input("1(查询合约列表) 2(查询行情+下单) 3(撤单) 4(查询历史订单) 5(订阅行情) 6(添加策略) 7(查询资金账户) q(退出) 请输入操作: ").strip()
+            op = input("1(查询合约列表) 2(查询行情+下单) 3(撤单) 4(查询历史订单) 5(订阅行情) 6(添加策略) 7(查询资金账户) 8(查询所有策略) q(退出) 请输入操作: ").strip()
             if op == "1":
                 print(session.get_all_contracts_pretty_str())
             elif op == "2":
@@ -56,6 +56,9 @@ if __name__ == "__main__":
                 session.add_strategy(session.input_strategy_class_name(), input_vt_symbol())
             elif op == "7":
                 session.get_all_accounts()
+            elif op == "8":
+                for strategy_name in session.get_all_strategy_names():
+                    print(strategy_name)
             elif op == "q":
                 print("程序退出！")
                 break

@@ -202,3 +202,6 @@ class CtpSession:
             self.logger().info(f"正在启动策略 {strategy_name}")
             self.cta_engine.init_strategy(strategy_name)
             self.cta_engine.start_strategy(strategy_name)
+
+    def get_all_strategy_names(self) -> list[str]:
+        return list(self.cta_engine.strategies.keys())
