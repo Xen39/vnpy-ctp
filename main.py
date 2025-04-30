@@ -1,10 +1,12 @@
 import sys
 import time
 
+
 from ctp.ctp_session import CtpSession
 from ctp.input import *
 from ctp.output import *
-
+from vnpy.trader.constant import Direction,Offset
+from vnpy.trader.object import  OrderRequest,OrderType,CancelRequest
 
 if __name__ == "__main__":
     session = CtpSession()

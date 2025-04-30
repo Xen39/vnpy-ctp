@@ -1,6 +1,6 @@
 import datetime
 
-from vnpy.trader.object import *
+from vnpy.trader.object import TickData,BarData,OrderData,TradeData,PositionData,AccountData,LogData,ContractData,QuoteData
 from enum import Enum
 
 
