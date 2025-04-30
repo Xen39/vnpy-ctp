@@ -131,9 +131,10 @@ class CtpSession:
         if not parser.has_section("datafeed"):
             self.logger().warning("配置文件中未找到[datafeed]数据服务,无法提供历史行情")
         else:
-            self._init_datafeed(platform=parser.get("datafeed", "platform", fallback=""),
-                                username=parser.get("datafeed", "username", fallback=""),
-                                password=parser.get("datafeed", "password", fallback=""))
+            if not self._init_datafeed(platform=parser.get("datafeed", "platform", fallback=""),
+                                       username=parser.get("datafeed", "username", fallback=""),
+                                       password=parser.get("datafeed", "password", fallback="")):
+                self.logger().error(f"datafeed 初始化失败!")
         self._init_engines()
         self._register_events()
         # load our own strategy
@@ -141,19 +142,21 @@ class CtpSession:
         for strategy_filepath in os.listdir(strategy_dir):
             self.cta_engine.load_strategy_class_from_module(f"strategy.{strategy_filepath.rstrip('.py')}")
 
-    def _init_datafeed(self, platform, username, password) -> None:
+    def _init_datafeed(self, platform, username, password) -> bool:
         self.logger().info(f"加载数据服务[datafeed]: {username}@{platform}")
+        supported_platforms = ("rqdata", "tqsdk")
+        if platform not in supported_platforms:
+            self.logger().error(f"datafeed platform 暂不支持 {platform}, 目前仅支持 {supported_platforms}")
         SETTINGS["datafeed.name"] = platform
         SETTINGS["datafeed.username"] = username
         SETTINGS["datafeed.password"] = password
-        sys.path.append(os.path.join(__file__, "../../vnpy/datafeed/"))
+
         datafeed = get_datafeed()
-        if datafeed.__class__ == BaseDatafeed:
-            self.logger().error("加载datafeed错误,请检查你的datafeed.platform")
-            exit(0)
+        assert datafeed.__class__ != BaseDatafeed
         if not self._test_datafeed():
             self.logger().error("datafeed测试失败!")
-            exit(0)
+            return False
+        return True
 
     def _test_datafeed(self) -> bool:
         start_datetime = end_datetime = datetime.datetime.now()
