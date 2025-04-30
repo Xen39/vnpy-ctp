@@ -38,7 +38,6 @@ class TqsdkDatafeed(BaseDatafeed):
             output(traceback.format_exc())
             return None
 
-        api._auth._grants["features"].append("tq_dl")
         # 查询数据
         interval: str = INTERVAL_VT2TQ.get(req.interval, None)
         if not interval:
