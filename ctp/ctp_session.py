@@ -26,6 +26,7 @@ SETTINGS["log.active"] = True
 SETTINGS["log.level"] = logging.DEBUG
 SETTINGS["log.console"] = False
 
+
 class CtpSession:
     event_engine: EventEngine
     main_engine: MainEngine
@@ -152,6 +153,17 @@ class CtpSession:
         if not datafeed.init(self.logger().info):
             self.logger().error("datafeed连接错误,请检查用户名密码")
             exit(0)
+        if not self._test_datafeed():
+            self.logger().error("datafeed测试失败!")
+            exit(0)
+
+    def _test_datafeed(self) -> bool:
+        start_datetime = end_datetime = datetime.datetime.now()
+        start_datetime.replace(hour=1, minute=0, second=0, microsecond=0)
+        start_datetime -= datetime.timedelta(days=30)
+        req = HistoryRequest("au2506", Exchange.SHFE, start_datetime, end_datetime, interval=Interval.DAILY)
+        bar_datas = get_datafeed().query_bar_history(req=req, output=self.logger().debug)
+        return bar_datas == []
 
     def logger(self):
         return self._logger
