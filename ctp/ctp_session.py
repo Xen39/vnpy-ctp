@@ -10,6 +10,7 @@ import sys
 
 from vnpy.event import EventEngine, Event
 from vnpy.trader.event import *
+from vnpy.trader.datafeed import get_datafeed, BaseDatafeed
 from vnpy.trader.engine import MainEngine, OmsEngine
 from vnpy.trader.object import *
 from vnpy.trader.setting import SETTINGS
@@ -34,12 +35,7 @@ class CtpSession:
     _logger: logging.Logger
 
     def __init__(self):
-        self._init_engines()
-        self._register_events()
-        # load our own strategy
-        strategy_dir = os.path.join(__file__, "../../strategy/")
-        for strategy_filepath in os.listdir(strategy_dir):
-            self.cta_engine.load_strategy_class_from_module(f"strategy.{strategy_filepath.rstrip('.py')}")
+        pass
 
     def _init_engines(self) -> None:
         self.event_engine = EventEngine()
@@ -56,6 +52,33 @@ class CtpSession:
         self.event_engine.register(EVENT_POSITION, self._on_position)
         self.event_engine.register(EVENT_CTA_STRATEGY, self._on_strategy)
         self.event_engine.register(EVENT_LOG, self._on_log)
+
+    def _init_logger(self, log_dir: str, file_level: int, console_level: int, encoding: str) -> None:
+        log_filename = f"ctp-{datetime.datetime.now().strftime('%Y%m%d-%H%M%S')}.log.txt"
+        log_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), log_dir)
+        if not os.path.exists(log_dir):
+            os.mkdir(log_dir)
+        elif not os.path.isdir(log_dir):
+            print(f"日志输出目录 {log_dir} 已存在且不为文件夹", file=sys.stderr)
+            exit(0)
+
+        log_filepath = os.path.join(log_dir, log_filename)
+
+        self._logger = logging.getLogger(__name__)
+        self.logger().setLevel(logging.DEBUG)
+
+        console_handler = logging.StreamHandler()
+        console_handler.setLevel(console_level)
+
+        file_handler = logging.FileHandler(log_filepath, encoding=encoding)
+        file_handler.setLevel(file_level)
+
+        formatter = logging.Formatter('%(asctime)s [%(levelname)s]: %(message)s')
+        console_handler.setFormatter(formatter)
+        file_handler.setFormatter(formatter)
+
+        self.logger().addHandler(console_handler)
+        self.logger().addHandler(file_handler)
 
     def _on_tick(self, event: Event) -> None:
         self.logger().debug(f"[回调]行情: {to_string(event.data)}")
@@ -101,45 +124,33 @@ class CtpSession:
                           console_level=parser.getint("log", "console_level", fallback=logging.INFO),
                           encoding=parser.get("log", "encoding", fallback="utf-8"))
         self.logger().info(f"读取配置文件: {abs_filepath}")
+        # datafeed is a singleton and will be initialized while constructing self.cta_engine,
+        # so _init_datafeed() must be called before _init_engines()
         if not parser.has_section("datafeed"):
             self.logger().warning("配置文件中未找到[datafeed]数据服务,无法提供历史行情")
         else:
             self._init_datafeed(platform=parser.get("datafeed", "platform", fallback=""),
                                 username=parser.get("datafeed", "username", fallback=""),
                                 password=parser.get("datafeed", "password", fallback=""))
-
-    def _init_logger(self, log_dir: str, file_level: int, console_level: int, encoding: str) -> None:
-        log_filename = f"ctp-{datetime.datetime.now().strftime('%Y%m%d-%H%M%S')}.log.txt"
-        log_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), log_dir)
-        if not os.path.exists(log_dir):
-            os.mkdir(log_dir)
-        elif not os.path.isdir(log_dir):
-            print(f"日志输出目录 {log_dir} 已存在且不为文件夹", file=sys.stderr)
-            exit(0)
-
-        log_filepath = os.path.join(log_dir, log_filename)
-
-        self._logger = logging.getLogger(__name__)
-        self.logger().setLevel(logging.DEBUG)
-
-        console_handler = logging.StreamHandler()
-        console_handler.setLevel(console_level)
-
-        file_handler = logging.FileHandler(log_filepath, encoding=encoding)
-        file_handler.setLevel(file_level)
-
-        formatter = logging.Formatter('%(asctime)s [%(levelname)s]: %(message)s')
-        console_handler.setFormatter(formatter)
-        file_handler.setFormatter(formatter)
-
-        self.logger().addHandler(console_handler)
-        self.logger().addHandler(file_handler)
+        self._init_engines()
+        self._register_events()
+        # load our own strategy
+        strategy_dir = os.path.join(__file__, "../../strategy/")
+        for strategy_filepath in os.listdir(strategy_dir):
+            self.cta_engine.load_strategy_class_from_module(f"strategy.{strategy_filepath.rstrip('.py')}")
 
     def _init_datafeed(self, platform, username, password) -> None:
         self.logger().info(f"加载数据服务[datafeed]: {username}@{platform}")
         SETTINGS["datafeed.name"] = platform
         SETTINGS["datafeed.username"] = username
         SETTINGS["datafeed.password"] = password
+        datafeed = get_datafeed()
+        if datafeed.__class__ == BaseDatafeed:
+            self.logger().error("加载datafeed错误,请检查你的配置")
+            exit(0)
+        if not datafeed.init(self.logger().info):
+            self.logger().error("datafeed连接错误,请检查用户名密码")
+            exit(0)
 
     def logger(self):
         return self._logger
