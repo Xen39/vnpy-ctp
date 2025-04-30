@@ -12,8 +12,8 @@ from vnpy.event import EventEngine, Event
 from vnpy.trader.event import *
 from vnpy.trader.datafeed import get_datafeed, BaseDatafeed
 from vnpy.trader.engine import MainEngine, OmsEngine
-from vnpy.trader.object import LogData, SubscribeRequest, OrderRequest, CancelRequest
-from vnpy.trader.constant import Exchange
+from vnpy.trader.object import CancelRequest, HistoryRequest, LogData, OrderRequest, SubscribeRequest
+from vnpy.trader.constant import Exchange, Interval
 from vnpy.trader.setting import SETTINGS
 from vnpy_ctastrategy import CtaEngine, CtaStrategyApp
 from vnpy_ctastrategy.base import EVENT_CTA_STRATEGY
@@ -146,12 +146,10 @@ class CtpSession:
         SETTINGS["datafeed.name"] = platform
         SETTINGS["datafeed.username"] = username
         SETTINGS["datafeed.password"] = password
+        sys.path.append(os.path.join(__file__, "../../vnpy/datafeed/"))
         datafeed = get_datafeed()
         if datafeed.__class__ == BaseDatafeed:
-            self.logger().error("加载datafeed错误,请检查你的配置")
-            exit(0)
-        if not datafeed.init(self.logger().info):
-            self.logger().error("datafeed连接错误,请检查用户名密码")
+            self.logger().error("加载datafeed错误,请检查你的datafeed.platform")
             exit(0)
         if not self._test_datafeed():
             self.logger().error("datafeed测试失败!")
