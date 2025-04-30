@@ -235,7 +235,20 @@ class CtpSession:
         return vt_symbol in {c.vt_symbol for c in self.get_all_contracts()}
 
     def input_strategy_class_name(self) -> str:
-        strategy_dict = {i: name for i, name in enumerate(self.cta_engine.get_all_strategy_class_names())}
+        vnpy_strategy_class_names = {
+            "AtrRsiStrategy",
+            "BollChannelStrategy",
+            "DoubleMaStrategy",
+            "DualThrustStrategy",
+            "KingKeltnerStrategy",
+            "MultiSignalStrategy",
+            "MultiTimeframeStrategy",
+            "TestStrategy",
+            "TurtleSignalStrategy",
+        }
+        our_strategy_class_names = list(set(self.cta_engine.get_all_strategy_class_names()) - vnpy_strategy_class_names)
+        our_strategy_class_names.sort()
+        strategy_dict = {i: name for i, name in enumerate(our_strategy_class_names)}
         for i, strategy_class_name in strategy_dict.items():
             print(f"{i}: {strategy_class_name}")
         idx = input_int(0, len(strategy_dict) - 1)
