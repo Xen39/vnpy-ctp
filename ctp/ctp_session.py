@@ -12,7 +12,8 @@ from vnpy.event import EventEngine, Event
 from vnpy.trader.event import *
 from vnpy.trader.datafeed import get_datafeed, BaseDatafeed
 from vnpy.trader.engine import MainEngine, OmsEngine
-from vnpy.trader.object import *
+from vnpy.trader.object import LogData, SubscribeRequest, OrderRequest, CancelRequest
+from vnpy.trader.constant import Exchange
 from vnpy.trader.setting import SETTINGS
 from vnpy_ctastrategy import CtaEngine, CtaStrategyApp
 from vnpy_ctastrategy.base import EVENT_CTA_STRATEGY
