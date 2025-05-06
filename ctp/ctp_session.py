@@ -144,7 +144,7 @@ class CtpSession:
 
     def _init_datafeed(self, platform, username, password) -> bool:
         self.logger().info(f"加载数据服务[datafeed]: {username}@{platform}")
-        supported_platforms = ("rqdata", "tqsdk")
+        supported_platforms = ("rqdata", "tqsdk", "tushare")
         if platform not in supported_platforms:
             self.logger().error(f"datafeed platform 暂不支持 {platform}, 目前仅支持 {supported_platforms}")
         SETTINGS["datafeed.name"] = platform
@@ -154,9 +154,11 @@ class CtpSession:
         datafeed = get_datafeed()
         assert datafeed.__class__ != BaseDatafeed
         if not self._test_datafeed():
-            self.logger().error("datafeed测试失败!")
+            self.logger().error("datafeed 测试失败!")
             return False
-        return True
+        else:
+            self.logger().info("datafeed 测试通过!")
+            return True
 
     def _test_datafeed(self) -> bool:
         start_datetime = datetime.datetime(year=2025, month=4, day=1) # 2025-4-1
@@ -170,8 +172,7 @@ class CtpSession:
 
     def connect(self):
         self.ctp_gateway = self.main_engine.add_gateway(CtpGateway)
-        self.logger().info(
-            f"正在连接至CTP, 交易服务器 {self.conn_settings['交易服务器']}, 行情服务器 {self.conn_settings['行情服务器']}")
+        self.logger().info(f"正在连接至CTP, 交易服务器 {self.conn_settings['交易服务器']}, 行情服务器 {self.conn_settings['行情服务器']}")
         self.main_engine.connect(self.conn_settings, "CTP")
 
     def get_all_contracts(self):
