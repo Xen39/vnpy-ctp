@@ -51,8 +51,7 @@ if __name__ == "__main__":
             elif op == "7":
                 session.get_all_accounts()
             elif op == "8":
-                for strategy_name in session.get_all_strategy_names():
-                    print(strategy_name)
+                print(session.get_all_strategies_pretty_str())
             elif op == "9":
                 strategy_names = input("请输入策略名称(多个策略之间以','间隔):").split(',')
                 strategy_names = [x.strip() for x in strategy_names]

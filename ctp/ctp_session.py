@@ -277,8 +277,8 @@ class CtpSession:
         for strategy_name in strategy_names:
             self.cta_engine.start_strategy(strategy_name)
 
-    def get_all_strategy_names(self) -> list[str]:
-        return list(self.cta_engine.strategies.keys())
+    def get_all_strategies_pretty_str(self) -> str:
+        return '\n'.join([f"{strategy_name}: 初始化={strategy.inited}, 交易中={strategy.trading},  持仓={strategy.pos}" for strategy_name, strategy in self.cta_engine.strategies.items()])
 
     def stop_strategy(self, strategy_names: list[str]):
         self.logger().info(f"[执行]停止策略:{strategy_names}")
