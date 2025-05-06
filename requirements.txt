@@ -1,2 +1,4 @@
 vnpy_rqdata
 vnpy_tqsdk
+vnpy_tushare==1.4.7.0
+tushare==1.4.21
