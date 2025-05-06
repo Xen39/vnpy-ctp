@@ -7,6 +7,7 @@ import datetime
 import logging
 import os
 import sys
+import time
 
 from vnpy.event import EventEngine, Event
 from vnpy.trader.event import *
@@ -262,6 +263,7 @@ class CtpSession:
         if not isinstance(vt_symbols, list):
             assert isinstance(vt_symbols, str)
             vt_symbols = [vt_symbols]
+        strategy_names = []
         for vt_symbol in vt_symbols:
             strategy_name = f"{strategy_class_name}-{vt_symbol}"
             if not self.is_existed_vt_symbol(vt_symbol):
@@ -269,10 +271,11 @@ class CtpSession:
                 continue
             self.logger().info(f"[执行]添加策略 {strategy_name}")
             self.cta_engine.add_strategy(strategy_class_name, strategy_name, vt_symbol, {})
-
-            self.logger().info(f"正在启动策略 {strategy_name}")
             self.cta_engine.init_strategy(strategy_name)
-        self.cta_engine.start_all_strategies()
+            strategy_names.append(strategy_name)
+        time.sleep(3) # waiting for strategy initialization
+        for strategy_name in strategy_names:
+            self.cta_engine.start_strategy(strategy_name)
 
     def get_all_strategy_names(self) -> list[str]:
         return list(self.cta_engine.strategies.keys())
