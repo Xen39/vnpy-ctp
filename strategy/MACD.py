@@ -31,16 +31,17 @@ class MACDStrategy(CtaTemplate):
         # 创建K线合成器
         self.bg = BarGenerator(on_bar=self.on_bar, window=1, on_window_bar=None, interval=Interval.MINUTE, daily_end=None)
         # 创建时间序列管理器
-        self.am = ArrayManager(size=max(self.fast_window, self.slow_window, self.signal_window))
+        self.am = ArrayManager(size=self.slow_window + self.signal_window - 1)
         print(f"策略创建 {self.strategy_name}")
 
     def on_init(self):
         """策略初始化回调"""
         print("策略初始化")
         try:
-            self.load_bar(10)  # 加载10天历史数据
+            self.load_bar(days=7,interval=Interval.MINUTE)
         except Exception as e:
             print("初始化出错:", e)
+        self.put_event()
 
     def on_start(self):
         """策略启动回调"""
@@ -58,10 +59,8 @@ class MACDStrategy(CtaTemplate):
 
     def on_bar(self, bar: BarData):
         """K线数据更新回调"""
-        print(f"{self.strategy_name} on_bar()", to_string(bar))
         self.am.update_bar(bar)
         if not self.am.inited:
-            print(f"MACD not inited: count={self.am.count}, size={self.am.size}")
             return
 
         # 计算MACD指标
@@ -71,39 +70,27 @@ class MACDStrategy(CtaTemplate):
             self.signal_window,
             array=True
         )
-
         self.macd_value = macd[-1]
         self.signal_value = signal[-1]
         self.hist_value = hist[-1]
-
-        # 获取当前持仓
-        pos = self.pos
-        print("MACD judge")
         # 如果没有持仓
-        if pos == 0:
+        if self.pos == 0:
             # MACD线在信号线上方且柱状图由负变正，做多
             if self.macd_value > self.signal_value and self.hist_value > 0 and self.hist_value * hist[-2] <= 0:
                 self.buy(bar.close_price, self.fixed_size)
-                print("buy", file=sys.stderr)
             # MACD线在信号线下方且柱状图由正变负，做空
             elif self.macd_value < self.signal_value and self.hist_value < 0 and self.hist_value * hist[-2] <= 0:
                 self.short(bar.close_price, self.fixed_size)
-                print("short", file=sys.stderr)
-
         # 持有多头仓位
-        elif pos > 0:
+        elif self.pos > 0:
             # MACD线在信号线下方且柱状图由正变负，平多
             if self.macd_value < self.signal_value and self.hist_value < 0 and self.hist_value * hist[-2] <= 0:
-                self.sell(bar.close_price, abs(pos))
-                print("sell", file=sys.stderr)
+                self.sell(bar.close_price, abs(self.pos))
         # 持有空头仓位
-        elif pos < 0:
+        elif self.pos < 0:
             # MACD线在信号线上方且柱状图由负变正，平空
             if self.macd_value > self.signal_value and self.hist_value > 0 and self.hist_value * hist[-2] <= 0:
-                self.cover(bar.close_price, abs(pos))
-                print("cover", file=sys.stderr)
-
-        self.put_event()
+                self.cover(bar.close_price, abs(self.pos))
 
     def on_order(self, order: OrderData):
         """委托更新回调"""
