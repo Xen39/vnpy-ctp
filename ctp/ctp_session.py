@@ -159,12 +159,11 @@ class CtpSession:
         return True
 
     def _test_datafeed(self) -> bool:
-        start_datetime = end_datetime = datetime.datetime.now()
-        start_datetime.replace(hour=1, minute=0, second=0, microsecond=0)
-        start_datetime -= datetime.timedelta(days=30)
+        start_datetime = datetime.datetime(year=2025, month=4, day=1) # 2025-4-1
+        end_datetime = start_datetime + datetime.timedelta(days=7) # 2025-4-8
         req = HistoryRequest("au2506", Exchange.SHFE, start_datetime, end_datetime, interval=Interval.DAILY)
         bar_datas = get_datafeed().query_bar_history(req=req, output=self.logger().debug)
-        return bar_datas == []
+        return bar_datas != []
 
     def logger(self):
         return self._logger
