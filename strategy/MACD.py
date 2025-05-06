@@ -31,7 +31,7 @@ class MACDStrategy(CtaTemplate):
         # 创建K线合成器
         self.bg = BarGenerator(on_bar=self.on_bar, window=1, on_window_bar=None, interval=Interval.MINUTE, daily_end=None)
         # 创建时间序列管理器
-        self.am = ArrayManager(size=self.slow_window + self.signal_window - 1)
+        self.am = ArrayManager(size=self.slow_window + self.signal_window)
         print(f"策略创建 {self.strategy_name}")
 
     def on_init(self):
