@@ -20,7 +20,7 @@ def to_string(obj) -> str:
                f"名称:{obj.name} 交易量:{obj.volume} 交易额:{obj.turnover} 持仓量:{obj.open_interest} 最高价:{obj.high_price} 最低价:{obj.low_price} 开盘价:{obj.open_price} 昨收盘价:{obj.pre_close} 价格限制:[{obj.limit_down}, {obj.limit_up}]}}"
     elif isinstance(obj, BarData):
         return f"切片行情{{间隔:{obj.interval.value} 合约:{obj.symbol}.{obj.exchange.value} 时间:{to_string(obj.datetime)} " \
-               f"交易量:{obj.volume} 交易额:{obj.turnover} 持仓量:{obj.open_interest} 最高价:{obj.high_price} 最低价:{obj.low_price} 开盘价:{obj.open_price} 收盘价:{obj.close_price}}}"
+               f"市场交易量:{obj.volume} 市场交易额:{obj.turnover} 市场持仓量:{obj.open_interest} 最高价:{obj.high_price} 最低价:{obj.low_price} 开盘价:{obj.open_price} 收盘价:{obj.close_price}}}"
     elif isinstance(obj, OrderData):
         return f"订单信息{{合约:{obj.symbol}.{obj.exchange.value} 订单号:{obj.orderid} 时间:{to_string(obj.datetime)} 类型:{obj.type.value} 方向:{obj.offset.value}/{obj.direction.value} " \
                f"价格:{obj.price} 数量:{obj.volume} 已成交量:{obj.traded} 状态:{obj.status.value}}}"
