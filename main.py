@@ -1,4 +1,5 @@
 import sys
+import os
 import time
 
 from ctp.ctp_session import CtpSession
@@ -10,6 +11,7 @@ from vnpy.trader.object import OrderRequest, OrderType, CancelRequest
 if __name__ == "__main__":
     session = CtpSession()
     session.read_config()
+    session.load_strategy(os.path.join(os.path.dirname(__file__),"config/strategies.json"))
     session.connect()
     while not session.inited():
         time.sleep(1)

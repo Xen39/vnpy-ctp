@@ -4,6 +4,7 @@ __all__ = [
 
 import configparser
 import datetime
+import json
 import logging
 import os
 import sys
@@ -15,9 +16,11 @@ from vnpy.trader.datafeed import get_datafeed, BaseDatafeed
 from vnpy.trader.engine import MainEngine, OmsEngine
 from vnpy.trader.object import CancelRequest, HistoryRequest, LogData, OrderRequest, PositionData, SubscribeRequest
 from vnpy.trader.constant import Exchange, Interval
-from vnpy_ctastrategy import CtaEngine, CtaStrategyApp
+from vnpy_ctastrategy import CtaEngine, CtaStrategyApp, CtaTemplate
 from vnpy_ctastrategy.base import EVENT_CTA_STRATEGY
 from vnpy_ctp import CtpGateway
+
+from strategy.util.serializer import StrategyJsonSerializer
 
 from .input import input_int
 from .output import to_string
@@ -143,7 +146,34 @@ class CtpSession:
         # load our own strategy
         strategy_dir = os.path.join(__file__, "../../strategy/")
         for strategy_filepath in os.listdir(strategy_dir):
-            self.cta_engine.load_strategy_class_from_module(f"strategy.{strategy_filepath.rstrip('.py')}")
+            if strategy_filepath.endswith(".py"):
+                self.cta_engine.load_strategy_class_from_module(f"strategy.{strategy_filepath.rstrip('.py')}")
+
+    def save_strategy(self, json_filepath) -> None:
+        abs_filepath = os.path.join(os.path.dirname(os.path.abspath(__file__)), json_filepath)
+        if os.path.exists(abs_filepath):
+            confirm = input(f"策略记录文件 {abs_filepath} 已存在,是否覆盖? (y/n)").strip().lower()
+            while confirm not in ("y", "n"):
+                print("非法输入！", file=sys.stderr)
+                confirm = input(f"策略记录文件 {abs_filepath} 已存在,是否覆盖? (y/n)").strip().lower()
+            if confirm == "n":
+                return
+        with open(abs_filepath, "w", encoding="utf-8") as f:
+            json.dump(self.get_all_strategies(),f, default=StrategyJsonSerializer.to_dict)
+        self.logger().info(f"策略已保存至 {abs_filepath}")
+
+    def load_strategy(self, json_filepath) -> None:
+        if not os.path.isfile(json_filepath):
+            self._logger.error(f"策略记录文件 {json_filepath} 不存在!")
+            exit(-1)
+        with open(json_filepath, "r", encoding="utf-8") as f:
+            datas:list[dict] = json.load(f)
+            for data in datas:
+                dct = StrategyJsonSerializer.from_dict(data)
+                self.cta_engine.add_strategy(**dct)
+                self.cta_engine.init_strategy(dct["strategy_name"])
+                while not self.get_strategy(dct["strategy_name"]).inited:
+                    time.sleep(0.5)
 
     def _init_datafeed(self, platform, username, password) -> bool:
         self.logger().info(f"加载数据服务[datafeed]: {username}@{platform}")
@@ -227,6 +257,7 @@ class CtpSession:
         if self.main_engine is not None:
             self.logger().info("关闭连接！")
             self.main_engine.close()
+        self.save_strategy("../config/strategies.json")
 
     def get_history_orders(self):
         result = self.oms_engine.get_all_orders()
@@ -260,7 +291,7 @@ class CtpSession:
         idx = input_int(0, len(strategy_dict) - 1)
         return strategy_dict[idx]
 
-    def add_strategy(self, strategy_class_name: str, vt_symbols: str | list) -> None:
+    def add_strategy(self, strategy_class_name: str, vt_symbols: str | list, setting={}) -> None:
         if strategy_class_name not in self.cta_engine.get_all_strategy_class_names():
             self.logger().critical(
                 f"目标策略 {strategy_class_name} 不在策略列表中:{self.cta_engine.get_all_strategy_class_names()}")
@@ -275,15 +306,26 @@ class CtpSession:
                 self.logger().warning(f"合约 {vt_symbol} 不在交易列表中,跳过策略{strategy_name}")
                 continue
             self.logger().info(f"[执行]添加策略 {strategy_name}")
-            self.cta_engine.add_strategy(strategy_class_name, strategy_name, vt_symbol, {})
+            self.cta_engine.add_strategy(strategy_class_name, strategy_name, vt_symbol, setting)
             self.cta_engine.init_strategy(strategy_name)
             strategy_names.append(strategy_name)
         time.sleep(3) # waiting for strategy initialization
         for strategy_name in strategy_names:
             self.cta_engine.start_strategy(strategy_name)
 
+    def get_all_strategies(self) -> list[CtaTemplate]:
+        strategies = list(self.cta_engine.strategies.values())
+        strategies.sort(key=lambda s:s.strategy_name)
+        return strategies
+
+    def get_strategy(self, strategy_name: str) -> CtaTemplate:
+        if strategy_name not in self.cta_engine.strategies:
+            self.logger().critical(f"{strategy_name} not found in strategies")
+            exit(0)
+        return self.cta_engine.strategies[strategy_name]
+
     def get_all_strategies_pretty_str(self) -> str:
-        return '\n'.join([f"{strategy_name}: 初始化={strategy.inited}, 交易中={strategy.trading},  持仓={strategy.pos}" for strategy_name, strategy in self.cta_engine.strategies.items()])
+        return '\n'.join([f"{strategy.strategy_name}: 初始化={strategy.inited}, 交易中={strategy.trading},  持仓={strategy.pos}" for strategy in self.get_all_strategies()])
 
     def stop_strategy(self, strategy_names: list[str]):
         self.logger().info(f"[执行]停止策略:{strategy_names}")
