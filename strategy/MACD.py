@@ -60,7 +60,6 @@ class MACDStrategy(CtaTemplate):
     def on_bar(self, bar: BarData):
         """K线数据更新回调"""
         self.am.update_bar(bar)
-        self._logger.info(f"{self.strategy_name} on_bar(): {self.am.count}/{self.am.size} {to_string(bar)}")
         if not self.am.inited:
             self._logger.debug(f"策略正在加载数据: {self.strategy_name}, {self.am.count}/{self.am.size}")
             return
