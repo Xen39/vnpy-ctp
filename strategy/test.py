@@ -1,5 +1,4 @@
 import logging
-import sys
 
 from vnpy_ctastrategy import *
 from vnpy.trader.constant import Interval
@@ -56,7 +55,7 @@ class MyTestStrategy(CtaTemplate):
         elif self.pos == 1:
             self.sell(bar.close_price, 1)
         else:
-            self._logger.error(f"unexpected position: {self.pos}", file=sys.stderr)
+            self._logger.error(f"unexpected position: {self.pos}")
 
         self.put_event()
 
