@@ -11,7 +11,7 @@ if __name__ == "__main__":
     session = CtpSession()
     session.read_config()
     session.connect()
-    print("请等待信息'结算信息确认成功'后再操作")
+    print("请等待消息'合约信息查询成功'后再操作")
     try:
         while True:
             time.sleep(1)
