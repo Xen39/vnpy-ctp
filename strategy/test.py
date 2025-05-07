@@ -44,7 +44,7 @@ class MyTestStrategy(CtaTemplate):
 
     def on_bar(self, bar: BarData):
         """K线数据更新回调"""
-        self._logger.info(f"{self.strategy_name} on_bar()", to_string(bar))
+        self._logger.info(f"{self.strategy_name} on_bar(): {to_string(bar)}")
         self.am.update_bar(bar)
         if not self.am.inited:
             self._logger.info(f"{self.strategy_name} initializing: count={self.am.count}, size={self.am.size}")
