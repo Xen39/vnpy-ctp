@@ -15,13 +15,13 @@ from vnpy.trader.datafeed import get_datafeed, BaseDatafeed
 from vnpy.trader.engine import MainEngine, OmsEngine
 from vnpy.trader.object import CancelRequest, HistoryRequest, LogData, OrderRequest, PositionData, SubscribeRequest
 from vnpy.trader.constant import Exchange, Interval
-from vnpy.trader.setting import SETTINGS
 from vnpy_ctastrategy import CtaEngine, CtaStrategyApp
 from vnpy_ctastrategy.base import EVENT_CTA_STRATEGY
 from vnpy_ctp import CtpGateway
 
 from .input import input_int
 from .output import to_string
+from .settings import SETTINGS
 
 SETTINGS["log.active"] = True
 SETTINGS["log.level"] = logging.DEBUG
@@ -82,6 +82,8 @@ class CtpSession:
 
         self.logger().addHandler(console_handler)
         self.logger().addHandler(file_handler)
+
+        SETTINGS["logger"] = self.logger()
 
     def _on_tick(self, event: Event) -> None:
         self.logger().debug(f"[回调]行情: {to_string(event.data)}")

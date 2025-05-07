@@ -1,14 +1,15 @@
-import sys
+import logging
 
 from vnpy_ctastrategy import *
 from vnpy.trader.constant import Interval
-from ctp.output import to_string
 
+from ctp.output import to_string
+from ctp.settings import SETTINGS
 
 class MACDStrategy(CtaTemplate):
     """MACD策略"""
 
-    author = "Xen39"
+    _logger: logging.Logger = None
 
     # 策略参数
     fast_window = 12  # 快速EMA周期
@@ -27,31 +28,30 @@ class MACDStrategy(CtaTemplate):
     def __init__(self, cta_engine, strategy_name, vt_symbol, setting):
         """初始化策略"""
         super().__init__(cta_engine, strategy_name, vt_symbol, setting)
+        self._logger = SETTINGS["logger"]
+        assert self._logger is not None
 
         # 创建K线合成器
         self.bg = BarGenerator(on_bar=self.on_bar, window=1, on_window_bar=None, interval=Interval.MINUTE, daily_end=None)
         # 创建时间序列管理器
         self.am = ArrayManager(size=self.slow_window + self.signal_window)
-        print(f"策略创建 {self.strategy_name}")
+        self._logger.info(f"策略创建: {self.strategy_name}")
 
     def on_init(self):
         """策略初始化回调"""
-        print("策略初始化")
+        self._logger.info(f"策略初始化中: {self.strategy_name}")
         try:
-            self.load_bar(days=7,interval=Interval.MINUTE)
+            self.load_bar(days=1,interval=Interval.MINUTE, callback=self.on_bar)
         except Exception as e:
-            print("初始化出错:", e)
-        self.put_event()
+            self._logger.error(f"策略加载历史数据时出错: {self.strategy_name}, {e}")
 
     def on_start(self):
         """策略启动回调"""
-        print("策略启动")
-        self.put_event()
+        self._logger.info(f"策略启动: {self.strategy_name}")
 
     def on_stop(self):
         """策略停止回调"""
-        print("策略停止")
-        self.put_event()
+        self._logger.info(f"策略停止: {self.strategy_name}")
 
     def on_tick(self, tick: TickData):
         """Tick数据更新回调"""
@@ -60,7 +60,9 @@ class MACDStrategy(CtaTemplate):
     def on_bar(self, bar: BarData):
         """K线数据更新回调"""
         self.am.update_bar(bar)
+        self._logger.info(f"{self.strategy_name} on_bar(): {self.am.count}/{self.am.size} {to_string(bar)}")
         if not self.am.inited:
+            self._logger.debug(f"策略正在加载数据: {self.strategy_name}, {self.am.count}/{self.am.size}")
             return
 
         # 计算MACD指标
@@ -98,7 +100,7 @@ class MACDStrategy(CtaTemplate):
 
     def on_trade(self, trade: TradeData):
         """成交更新回调"""
-        self.put_event()
+        self._logger.info(f"策略成交: {self.strategy_name}, {to_string(trade)}")
 
     def on_stop_order(self, stop_order: StopOrder):
         """停止单更新回调"""
