@@ -193,9 +193,6 @@ class CtpSession:
             pretty_str += "\n"
         return pretty_str.strip()
 
-    def get_all_positions(self):
-        return self.oms_engine.get_all_positions()
-
     def send_order(self, req: OrderRequest):
         self.logger().info(f"[执行]下单:{vars(req)}")
         if not self.is_existed_vt_symbol(req.vt_symbol):
