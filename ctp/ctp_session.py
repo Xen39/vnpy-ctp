@@ -171,9 +171,14 @@ class CtpSession:
             for data in datas:
                 dct = StrategyJsonSerializer.from_dict(data)
                 self.cta_engine.add_strategy(**dct)
-                self.cta_engine.init_strategy(dct["strategy_name"])
-                while not self.get_strategy(dct["strategy_name"]).inited:
-                    time.sleep(0.5)
+                strategy_name = dct["strategy_name"]
+                if not self.get_strategy(strategy_name).inited:
+                    self.cta_engine.init_strategy(strategy_name)
+                    while not self.get_strategy(strategy_name).inited:
+                        time.sleep(0.5)
+                if not self.get_strategy(strategy_name).trading:
+                    self.cta_engine.start_strategy(strategy_name)
+        self.logger().info(f"策略记录文件 {json_filepath} 加载完成!")
 
     def _init_datafeed(self, platform, username, password) -> bool:
         self.logger().info(f"加载数据服务[datafeed]: {username}@{platform}")
