@@ -1,6 +1,7 @@
 import sys
 import os
 import time
+import traceback
 
 from ctp.ctp_session import CtpSession
 from ctp.input import *
@@ -70,5 +71,8 @@ if __name__ == "__main__":
                 continue
     except KeyboardInterrupt:
         print("捕捉到Ctrl+C,程序退出!", file=sys.stderr)
+    except Exception as e:
+        print(f"执行主程序出错: {e}", file=sys.stderr)
+        traceback.print_exc()
     finally:
         session.close()
