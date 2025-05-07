@@ -11,7 +11,9 @@ if __name__ == "__main__":
     session = CtpSession()
     session.read_config()
     session.connect()
-    print("请等待消息'合约信息查询成功'后再操作")
+    while not session.inited():
+        time.sleep(1)
+    print("连接并初始化完成!")
     try:
         while True:
             time.sleep(1)

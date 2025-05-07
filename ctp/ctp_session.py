@@ -178,6 +178,9 @@ class CtpSession:
         self.logger().info(f"正在连接至CTP, 交易服务器 {self.conn_settings['交易服务器']}, 行情服务器 {self.conn_settings['行情服务器']}")
         self.main_engine.connect(self.conn_settings, "CTP")
 
+    def inited(self):
+        return self.oms_engine.get_all_accounts() != []
+
     def get_all_contracts(self):
         return self.oms_engine.get_all_contracts()
 
