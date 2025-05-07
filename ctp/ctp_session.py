@@ -101,7 +101,7 @@ class CtpSession:
         self.logger().debug(f"[回调]持仓: {to_string(event.data)}")
 
     def _on_strategy(self, event: Event) -> None:
-        self.logger().info(f"[回调]策略: {to_string(event.data)}")
+        self.logger().debug(f"[回调]策略: {to_string(event.data)}")
 
     def _on_log(self, event) -> None:
         data: LogData = event.data
