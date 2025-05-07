@@ -13,7 +13,7 @@ from vnpy.event import EventEngine, Event
 from vnpy.trader.event import *
 from vnpy.trader.datafeed import get_datafeed, BaseDatafeed
 from vnpy.trader.engine import MainEngine, OmsEngine
-from vnpy.trader.object import CancelRequest, HistoryRequest, LogData, OrderRequest, SubscribeRequest
+from vnpy.trader.object import CancelRequest, HistoryRequest, LogData, OrderRequest, PositionData, SubscribeRequest
 from vnpy.trader.constant import Exchange, Interval
 from vnpy.trader.setting import SETTINGS
 from vnpy_ctastrategy import CtaEngine, CtaStrategyApp
@@ -187,6 +187,9 @@ class CtpSession:
                 f"{f'{c.symbol}.{c.exchange.value}':20} {c.product.value:4}" for c in contracts[i:i + step])
             pretty_str += "\n"
         return pretty_str.strip()
+
+    def get_all_positions(self):
+        return self.oms_engine.get_all_positions()
 
     def send_order(self, req: OrderRequest):
         self.logger().info(f"[执行]下单:{vars(req)}")
