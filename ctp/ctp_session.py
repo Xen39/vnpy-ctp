@@ -116,7 +116,7 @@ class CtpSession:
         elif data.level == logging.CRITICAL:
             self.logger().critical(data.msg)
 
-    def read_config(self, ini_filepath: str = "config.ini") -> None:
+    def read_config(self, ini_filepath: str = "../config/config.ini") -> None:
         parser = configparser.ConfigParser()
         abs_filepath = os.path.join(os.path.dirname(os.path.abspath(__file__)), ini_filepath)
         if not os.path.exists(abs_filepath):
