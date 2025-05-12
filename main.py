@@ -12,11 +12,11 @@ from vnpy.trader.object import OrderRequest, OrderType, CancelRequest
 if __name__ == "__main__":
     session = CtpSession()
     session.read_config()
-    session.load_strategy(os.path.join(os.path.dirname(__file__),"config/strategies.json"))
     session.connect()
     while not session.inited():
         time.sleep(1)
     print("连接并初始化完成!")
+    session.load_strategy(os.path.join(os.path.dirname(__file__),"config/strategies.json"))
     try:
         while True:
             time.sleep(1)
