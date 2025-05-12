@@ -13,7 +13,6 @@ class StrategyJsonSerializer:
 
     @staticmethod
     def to_dict(strategy: CtaTemplate):
-        print(f"strategy = {strategy}")
         variables_dict = {variable: getattr(strategy, variable) for variable in strategy.variables}
         dct={
             "class_name": strategy.__class__.__name__,
