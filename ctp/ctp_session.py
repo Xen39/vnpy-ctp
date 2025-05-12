@@ -165,7 +165,7 @@ class CtpSession:
     def load_strategy(self, json_filepath) -> None:
         if not os.path.isfile(json_filepath):
             self._logger.error(f"策略记录文件 {json_filepath} 不存在!")
-            exit(-1)
+            return
         with open(json_filepath, "r", encoding="utf-8") as f:
             datas:list[dict] = json.load(f)
             for data in datas:
