@@ -4,7 +4,7 @@ from dataclasses import dataclass
 from vnpy_ctastrategy import CtaTemplate
 
 from strategy.C53 import C53
-from strategy.MACD import MACDStrategy
+from strategy.MACD import MACD
 from strategy.simple_test import SimpleTest
 
 class StrategyJsonSerializer:

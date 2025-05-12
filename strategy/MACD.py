@@ -6,7 +6,7 @@ from vnpy.trader.constant import Interval
 from ctp.output import to_string
 from ctp.settings import SETTINGS
 
-class MACDStrategy(CtaTemplate):
+class MACD(CtaTemplate):
     """MACD策略"""
 
     _logger: logging.Logger = None
