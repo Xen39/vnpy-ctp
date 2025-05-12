@@ -5,7 +5,7 @@ from vnpy_ctastrategy import CtaTemplate
 
 from strategy.C53 import C53
 from strategy.MACD import MACDStrategy
-from strategy.test import MyTestStrategy
+from strategy.simple_test import SimpleTest
 
 class StrategyJsonSerializer:
     def __init__(self):

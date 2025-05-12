@@ -6,7 +6,7 @@ from ctp.output import to_string
 
 from ctp.settings import SETTINGS
 
-class MyTestStrategy(CtaTemplate):
+class SimpleTest(CtaTemplate):
     """测试策略"""
 
     _logger: logging.Logger = None
