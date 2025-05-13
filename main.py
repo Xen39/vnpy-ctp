@@ -41,8 +41,9 @@ if __name__ == "__main__":
             session.logger().error("连接CTP超时")
             session.close()
             exit(-1)
-    print("连接并初始化完成!")
+    print("CTP连接成功!")
     session.load_strategy(os.path.join(os.path.dirname(__file__),"config/strategies.json"))
+    time.sleep(1)
     try:
         while True:
             op = input("请输入命令:").strip()
