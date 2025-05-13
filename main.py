@@ -13,8 +13,14 @@ if __name__ == "__main__":
     session = CtpSession()
     session.read_config()
     session.connect()
+    seconds_cnt = 0
     while not session.inited():
         time.sleep(1)
+        seconds_cnt += 1
+        if seconds_cnt > 30:
+            session.logger().error("连接CTP超时")
+            session.close()
+            exit(-1)
     print("连接并初始化完成!")
     session.load_strategy(os.path.join(os.path.dirname(__file__),"config/strategies.json"))
     try:
