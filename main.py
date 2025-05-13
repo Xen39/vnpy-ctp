@@ -92,7 +92,7 @@ if __name__ == "__main__":
                 elif op == "sq":
                     print(session.get_all_strategies_pretty_str())
                 elif op == "sr":
-                    strategy_names = input("请输入策略名称(多个策略之间以','间隔):").split(',')
+                    strategy_names = input("请输入策略名称(多个策略之间以','间隔)(输入'all'以全部停止):").split(',')
                     strategy_names = [x.strip() for x in strategy_names]
                     session.stop_strategy(strategy_names)
                 # subscribe

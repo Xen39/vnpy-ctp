@@ -335,9 +335,14 @@ class CtpSession:
         return '\n'.join([f"{strategy.strategy_name}: 初始化={strategy.inited}, 交易中={strategy.trading},  持仓={strategy.pos}" for strategy in self.get_all_strategies()])
 
     def stop_strategy(self, strategy_names: list[str]):
-        self.logger().info(f"[执行]停止策略:{strategy_names}")
+        self.logger().info(f"[执行]停止策略: {strategy_names}")
         for strategy_name in strategy_names:
-            if strategy_name not in self.cta_engine.strategies:
+            if strategy_name == "all":
+                for strategy_name2 in self.cta_engine.strategies.keys():
+                    self.cta_engine.stop_strategy(strategy_name2)
+                self._logger.info(f"已停止所有策略")
+                return
+            elif strategy_name not in self.cta_engine.strategies:
                 self.logger().warning(f"目标停止策略{strategy_name}不存在!")
                 return
             else:
