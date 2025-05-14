@@ -12,12 +12,18 @@
 - ### 此时显示的 Python 版本应为 3.13, 再点击确认(OK)
     ![Python解释器添加完成](images/interpreter_added.png)
 
-## Step3 安装第三方库
+## Step 3. 安装第三方库
 
 - ### 首次打开项目根目录下的 requirements.txt 时应该会在文件上方提示安装, 直接点击即可. 或者:
 - ### 使用 pip 手动安装: 
   ### 在命令行输入 pip install -r ./path/to/requirements.txt -i https://pypi.tuna.tsinghua.edu.cn/simple/
-## Step 3. 运行主程序 main.py
+
+## Step 4. 配置账号信息 
+
+- ### 根据个人账号和经纪商配置 config/config.ini
+- ### 注意当使用 [datafeed] 下的 platform 指定为 tushare 时, username 为你的手机号, password 为 你的token (请前往tushare官网,登录后在个人主页中查询)
+
+## Step 5. 运行主程序 main.py
 
 - ###  例如你可以点击右上角 Current File -> Edit Configurations 添加新的程序运行配置, 或者
 - ###  简单点: 打开项目根目录下的 main.py, 找到运行入口, 点击左边的绿色开始三角, 直接运行
