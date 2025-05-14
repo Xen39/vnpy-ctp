@@ -13,11 +13,10 @@ class StrategyJsonSerializer:
 
     @staticmethod
     def to_dict(strategy: CtaTemplate):
-        variables_dict = {variable: getattr(strategy, variable) for variable in strategy.variables}
         dct={
             "class_name": strategy.__class__.__name__,
             "vt_symbol": strategy.vt_symbol,
-            "variables": variables_dict,
+            "position": strategy.pos,
         }
         return {strategy.strategy_name: dct}
 
@@ -26,9 +25,12 @@ class StrategyJsonSerializer:
         assert len(dct) == 1
         strategy_name = list(dct.keys())[0]
         d: dict = dct[strategy_name]
+        setting = {
+            "pos": d["position"]
+        }
         return {
             "class_name": d["class_name"],
             "strategy_name": strategy_name,
             "vt_symbol": d["vt_symbol"],
-            "setting": d["variables"],
+            "setting": setting,
         }
