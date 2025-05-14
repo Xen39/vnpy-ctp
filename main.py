@@ -10,6 +10,7 @@ from vnpy.trader.constant import Direction, Offset
 from vnpy.trader.object import OrderRequest, OrderType, CancelRequest
 
 help_list = {
+    "q": "quit 退出程序",
     "h": "help 查看帮助",
     # query
     "qa": "query account 查询资金账户",
@@ -41,13 +42,16 @@ if __name__ == "__main__":
             session.logger().error("连接CTP超时")
             session.close()
             exit(-1)
-    print("CTP连接成功!")
+    session.logger().info("CTP连接成功!")
     session.load_strategy(os.path.join(os.path.dirname(__file__),"config/strategies.json"))
     try:
         while True:
             time.sleep(0.5) #  to print input tip after last operation's output
             op = input("请输入命令:").strip()
             if op in help_list:
+                if op == "q":
+                    session.logger().info("程序退出!")
+                    break
                 if op == "h":
                     for k, v in help_list.items():
                         print(f"{k:8} {v}")
