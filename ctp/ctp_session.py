@@ -51,6 +51,7 @@ class CtpSession:
         self.cta_engine.init_datafeed()
         self.cta_engine.load_strategy_class()
         self.cta_engine.register_event()
+        self.cta_engine.sync_strategy_data = lambda x: None
 
     def _register_events(self) -> None:
         self.event_engine.register(EVENT_TICK, self._on_tick)
