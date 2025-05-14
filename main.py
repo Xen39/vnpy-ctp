@@ -15,16 +15,16 @@ help_list = {
     # query
     "qa": "query account 查询资金账户",
     "qc": "query contracts 查询合约列表",
-    "qh": "query history 查询历史订单",
-    "qm": "query market 查询行情",
+    "qm": "query market data 查询指定合约行情",
     "qp": "query position 查询持仓",
     # order
-    "os": "order send 下单",
-    "oc": "order cancel 撤单",
+    "so": "send order 下单",
+    "co": "cancel order 撤单",
+    "lo": "list order 列出历史订单",
     # strategy
-    "sa": "strategy add 添加策略",
-    "sq": "strategy query 查询策略",
-    "sr": "strategy remove 停止并删除策略",
+    "as": "add strategy 添加策略",
+    "rs": "remove strategy 停止并删除策略",
+    "ls": "list strategy 列出所有策略",
     # subscribe
     "sub": "subscribe 订阅行情",
     "unsub" : "unsubscribe 取消订阅行情"
@@ -60,8 +60,6 @@ if __name__ == "__main__":
                     session.get_all_accounts()
                 elif op == "qc":
                     print(session.get_all_contracts_pretty_str())
-                elif op == "qh":
-                    session.get_history_orders()
                 elif op == "qm":
                     tick_data = session.get_tick(input_vt_symbol())
                     if tick_data is None:
@@ -72,7 +70,7 @@ if __name__ == "__main__":
                     for pos_data in session.get_all_positions():
                         print(to_string(pos_data))
                 # order
-                elif op == "os":
+                elif op == "so":
                     side = input("请输入方向(0买多,1卖多,2买空,3卖空,q退出):")
                     if side in ("0", "1", "2", "3"):
                         direction: Direction = Direction.LONG if side in ("0", "1") else Direction.SHORT
@@ -85,20 +83,23 @@ if __name__ == "__main__":
                         continue
                     else:
                         pass
-                elif op == "oc":
+                elif op == "co":
                     order_id = input("请输入订单号：")
                     symbol, exchange = input_symbol_exchange()
                     req = CancelRequest(orderid=order_id, symbol=symbol, exchange=exchange)
                     session.cancel_order(req)
+                elif op == "lo":
+                    for order_data in session.get_history_orders():
+                        print(to_string(order_data))
                 # strategy
-                elif op == "sa":
+                elif op == "as":
                     session.add_strategy(session.input_strategy_class_name(), input_vt_symbol())
-                elif op == "sq":
-                    print(session.get_all_strategies_pretty_str())
-                elif op == "sr":
+                elif op == "rs":
                     strategy_names = input("请输入策略名称(多个策略之间以','间隔)(输入'all'以全部停止):").split(',')
                     strategy_names = [x.strip() for x in strategy_names]
                     session.stop_strategy(strategy_names)
+                elif op == "ls":
+                    print(session.get_all_strategies_pretty_str())
                 # subscribe
                 elif op == "sub":
                     session.subscribe(*input_symbol_exchange())
