@@ -313,6 +313,9 @@ class CtpSession:
             if not self.is_existed_vt_symbol(vt_symbol):
                 self.logger().warning(f"合约 {vt_symbol} 不在交易列表中,跳过策略 {strategy_name}")
                 continue
+            if strategy_name in (strategy.strategy_name for strategy in self.get_all_strategies()):
+                self.logger().warning(f"已存在同名策略 {strategy_name}, 无法重复添加")
+                continue
             self.logger().debug(f"[执行]添加策略 {strategy_name}")
             self.cta_engine.add_strategy(strategy_class_name, strategy_name, vt_symbol, setting)
             self.cta_engine.init_strategy(strategy_name)
