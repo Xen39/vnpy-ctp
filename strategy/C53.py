@@ -1,15 +1,8 @@
-import logging
-
 from vnpy_ctastrategy import *
 
-from ctp.input import split_win_interval
-from ctp.output import to_string
-from ctp.settings import SETTINGS
+from .base_strategy import BaseStrategy
 
-
-class C53(CtaTemplate):
-    _logger: logging.Logger = None
-    interval: str = "1m"
+class C53(BaseStrategy):
     # 策略参数
     fund = 10_000_000  # 初始资金
     risk_ratio = 0.04  # 风险资金比例
@@ -22,7 +15,6 @@ class C53(CtaTemplate):
     fee_per_lot = 10  # 每手手续费
 
     # 策略变量
-    contract_multiplier = 0  # 合约乘数
     entry_price = 0.0  # 开仓价格
     highest_price = 0.0  # 多头持仓期间最高价
     lowest_price = 0.0  # 空头持仓期间最低价
@@ -38,72 +30,24 @@ class C53(CtaTemplate):
     ]
 
     variables = [
-        "contract_multiplier", "entry_price", "highest_price",
+        "entry_price", "highest_price",
         "lowest_price", "atr_value", "mas_value",
         "upper_levels", "lower_levels"
     ]
 
     def __init__(self, cta_engine, strategy_name: str, vt_symbol: str, setting: dict):
         super().__init__(cta_engine, strategy_name, vt_symbol, setting)
-        self._logger = SETTINGS["logger"]
-        assert self._logger is not None
 
-        if "interval" in setting:
-            self.interval = setting["interval"]
-        else:
-            self._logger.warning(f"{self.strategy_name}: interval not found in setting, using default value 1m")
-
-        window, interval = split_win_interval(self.interval)
-        # K线合成器
-        self.bg = BarGenerator(
-            on_bar=self.on_bar,
-            window=window,
-            on_window_bar=self.on_window_bar,
-            interval=interval,
-            daily_end=None
-        )
-
-        # 初始化ArrayManager
-        max_period = max(self.atr_length, self.ema_length, self.cl_period)
-        self.am = ArrayManager(size=max_period + self.cd_period + 10)  # 增加缓冲
-
-        # 获取合约信息
-        self.contract_multiplier = self.get_size()
-        if self.contract_multiplier is None or self.contract_multiplier<= 0:
-            self._logger.warning(f"{self.strategy_name} 未找到 {self.vt_symbol} 的合约乘数,设置为默认值 1")
-            self.contract_multiplier = 1
-
-    def on_init(self) -> None:
-        self._logger.info(f"策略初始化中: {self.strategy_name}")
-        try:
-            window, interval = split_win_interval(self.interval)
-            self.load_bar(days=7, interval=interval, callback=self.on_bar)
-            if self.am.inited:
-                self._logger.info(f"策略加载历史数据完成 {self.strategy_name}")
-            else:
-                self._logger.error(f"策略加载历史数据不足,无法开启 {self.strategy_name}, {self.am.count}/{self.am.size} ")
-        except Exception as e:
-            self._logger.info(f"策略加载历史数据出错: {self.strategy_name} {e}")
-
-    def on_start(self) -> None:
-        self._logger.info(f"策略启动: {self.strategy_name}")
-
-    def on_stop(self) -> None:
-        self._logger.info(f"策略停止: {self.strategy_name}")
-        self.cancel_all()
-
-    def on_tick(self, tick: TickData) -> None:
-        self.bg.update_tick(tick)
-
-    def on_bar(self, bar: BarData) -> None:
-        self.bg.update_bar(bar)
+    def num_init_bars(self) -> int:
+        return max(self.atr_length, self.ema_length, self.cl_period) + self.cd_period + 10
 
     def on_window_bar(self, bar: BarData) -> None:
-        self.cancel_all()
         self.am.update_bar(bar)
         if not self.am.inited:
             self._logger.debug(f"策略正在加载数据: {self.strategy_name}, {self.am.count}/{self.am.size}")
             return
+
+        self.cancel_all()
 
         # 计算ATR
         self.atr_value = self.am.atr(self.atr_length)
@@ -124,7 +68,7 @@ class C53(CtaTemplate):
             return
 
         # 计算交易手数
-        denominator = bar.close_price * self.contract_multiplier * self.get_margin_ratio() + self.fee_per_lot
+        denominator = bar.close_price * self.multiplier * self.margin_ratio + self.fee_per_lot
         risk_capital = self.fund * self.risk_ratio
         trading_size = max(int(risk_capital / denominator), 1)  # 至少1手
 
@@ -162,13 +106,13 @@ class C53(CtaTemplate):
         if current_pos == 0:
             # 开仓逻辑
             if long_condition:
-                price = bar.close_price + self.get_price_tick()  # 滑点处理
+                price = bar.close_price + self.tick_price  # 滑点处理
                 self.buy(price, trading_size)
                 self.entry_price = bar.close_price
                 self.highest_price = bar.high_price
 
             elif short_condition:
-                price = bar.close_price - self.get_price_tick()
+                price = bar.close_price - self.tick_price
                 self.short(price, trading_size)
                 self.entry_price = bar.close_price
                 self.lowest_price = bar.low_price
@@ -178,7 +122,7 @@ class C53(CtaTemplate):
             self.highest_price = max(self.highest_price, bar.high_price)
             # 平仓逻辑
             if long_stop:
-                price = bar.close_price - self.get_price_tick()
+                price = bar.close_price - self.tick_price
                 self.sell(price, abs(current_pos))
 
         elif current_pos < 0:
@@ -187,24 +131,5 @@ class C53(CtaTemplate):
 
             # 平仓逻辑
             if short_stop:
-                price = bar.close_price + self.get_price_tick()
+                price = bar.close_price + self.tick_price
                 self.cover(price, abs(current_pos))
-
-    def get_margin_ratio(self) -> float:
-        return 0.2  # TODO
-
-    def get_price_tick(self) -> float:
-        contract = self.cta_engine.main_engine.get_contract(self.vt_symbol)
-        if contract:
-            return contract.pricetick
-        return 1.0  # 默认返回1个最小变动单位
-
-    def on_order(self, order: OrderData) -> None:
-        self.put_event()
-
-    def on_trade(self, trade: TradeData) -> None:
-        self.put_event()
-        self._logger.info(f"策略交易: {self.strategy_name} {to_string(trade)}")
-
-    def on_stop_order(self, stop_order: StopOrder) -> None:
-        pass

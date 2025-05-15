@@ -1,17 +1,11 @@
 import numpy as np
-import logging
 
 from vnpy_ctastrategy import *
 
-from ctp.input import split_win_interval
-from ctp.output import to_string
-from ctp.settings import SETTINGS
+from .base_strategy import BaseStrategy
 
 
-class HaiYing6(CtaTemplate):
-    _logger: logging.Logger = None
-    interval: str = "1m"
-
+class HaiYing6(BaseStrategy):
     # 策略参数
     fund = 10_000_000  # 初始资金
     risk_ratio = 0.04  # 风险资金比例
@@ -21,7 +15,6 @@ class HaiYing6(CtaTemplate):
     fee_per_lot = 10  # 每手手续费
 
     # 策略变量
-    contract_multiplier = 0  # 合约乘数
     entry_price = 0  # 开仓价格
     highest_price = 0  # 多头最高价格
     lowest_price = 0  # 空头最低价格
@@ -39,38 +32,13 @@ class HaiYing6(CtaTemplate):
     ]
 
     variables = [
-        "contract_multiplier", "entry_price", "highest_price",
+        "entry_price", "highest_price",
         "lowest_price", "atr_value", "diff", "dea", "macd",
         "len_value", "dd_k", "trading_size"
     ]
 
     def __init__(self, cta_engine, strategy_name, vt_symbol, setting):
         super().__init__(cta_engine, strategy_name, vt_symbol, setting)
-        self._logger = SETTINGS["logger"]
-        assert self._logger is not None
-
-        if "interval" in setting:
-            self.interval = setting["interval"]
-        else:
-            self._logger.warning(f"{self.strategy_name}: interval not found in setting, using default value 1m")
-
-        window, interval = split_win_interval(self.interval)
-        # K线合成器
-        self.bg = BarGenerator(
-            on_bar=self.on_bar,
-            window=window,
-            on_window_bar=self.on_window_bar,
-            interval=interval,
-            daily_end=None
-        )
-        # 创建时间序列管理器
-        self.am = ArrayManager(size=self.len_period * 2 + 10)
-        self._logger.info(f"策略创建: {self.strategy_name}")
-        # 获取合约信息
-        self.contract_multiplier = self.get_size()
-        if self.contract_multiplier is None or self.contract_multiplier <= 0:
-            self._logger.warning(f"{self.strategy_name} 未找到 {self.vt_symbol} 的合约乘数,设置为默认值 1")
-            self.contract_multiplier = 1
 
         # 初始化MACD相关变量
         self.last_golden_cross = -1  # 上次金叉位置
@@ -79,28 +47,6 @@ class HaiYing6(CtaTemplate):
         self.last_death_cross_value = 0
         self.last_ddai = -1  # 上次多带鱼位置
         self.last_kdai = -1  # 上次空带鱼位置
-
-    def on_init(self):
-        self._logger.info(f"策略初始化中: {self.strategy_name}")
-        try:
-            window, interval = split_win_interval(self.interval)
-            self.load_bar(days=50, interval=interval, callback=self.on_bar)
-            if self.am.inited:
-                self._logger.info(f"策略加载历史数据完成 {self.strategy_name}")
-            else:
-                self._logger.error(f"策略加载历史数据不足,无法开启 {self.strategy_name} {self.am.count}/{self.am.size}")
-        except Exception as e:
-            self._logger.info(f"策略加载历史数据出错: {self.strategy_name} {e}")
-
-    def on_start(self):
-        self._logger.info(f"策略启动: {self.strategy_name}")
-
-    def on_stop(self):
-        self._logger.info(f"策略停止: {self.strategy_name}")
-        self.cancel_all()
-
-    def get_margin_ratio(self):
-        return 0.2
 
     def llv(self, period: int, array: np.ndarray) -> np.ndarray:
         """计算指定周期内的最低价数组"""
@@ -128,8 +74,8 @@ class HaiYing6(CtaTemplate):
                 result[i] = np.max(array[i - period + 1:i + 1])
         return result
 
-    def on_bar(self, bar: BarData) -> None:
-        self.bg.update_bar(bar)
+    def num_init_bars(self) -> int:
+        return self.len_period * 2 + 10
 
     def on_window_bar(self, bar: BarData) -> None:
         self.am.update_bar(bar)
@@ -140,7 +86,6 @@ class HaiYing6(CtaTemplate):
         self.cancel_all()  # 取消所有未成交订单
 
         # 更新技术指标
-        self.am.update_bar(bar)
         if not self.am.inited:
             return
 
@@ -177,9 +122,9 @@ class HaiYing6(CtaTemplate):
             self.dd_k = 1 if self.last_ddai < self.last_kdai else -1
 
         # 计算交易数量
-        margin_ratio = self.get_margin_ratio()  # 需实现获取保证金率
+        margin_ratio = self.margin_ratio
         risk_capital = self.fund * self.risk_ratio
-        denominator = bar.close_price * self.contract_multiplier * margin_ratio + self.fee_per_lot
+        denominator = bar.close_price * self.multiplier * margin_ratio + self.fee_per_lot
         self.trading_size = int(risk_capital / denominator)
 
         # 计算额外条件
@@ -223,12 +168,3 @@ class HaiYing6(CtaTemplate):
             self.lowest_price = min(self.lowest_price, bar.low_price)
             if bpy67 or bph15:
                 self.cover(bar.close_price + 5, abs(current_pos))
-
-    def on_order(self, order: OrderData):
-        pass
-
-    def on_trade(self, trade: TradeData):
-        self._logger.info(f"策略交易: {self.strategy_name} {to_string(trade)}")
-
-    def on_stop_order(self, stop_order: StopOrder):
-        pass
