@@ -1,17 +1,15 @@
-import pandas as pd
-import numpy as np
 import logging
 
 from vnpy_ctastrategy import *
-from vnpy.trader.constant import Interval
 
+from ctp.input import split_win_interval
 from ctp.output import to_string
 from ctp.settings import SETTINGS
 
 
 class C53(CtaTemplate):
     _logger: logging.Logger = None
-
+    interval: str = "1m"
     # 策略参数
     fund = 10_000_000  # 初始资金
     risk_ratio = 0.04  # 风险资金比例
@@ -50,12 +48,18 @@ class C53(CtaTemplate):
         self._logger = SETTINGS["logger"]
         assert self._logger is not None
 
+        if "interval" in setting:
+            self.interval = setting["interval"]
+        else:
+            self._logger.warning(f"{self.strategy_name}: interval not found in setting, using default value 1m")
+
+        window, interval = split_win_interval(self.interval)
         # K线合成器
         self.bg = BarGenerator(
             on_bar=self.on_bar,
-            window=1,
-            on_window_bar=None,
-            interval=Interval.MINUTE,
+            window=window,
+            on_window_bar=self.on_window_bar,
+            interval=interval,
             daily_end=None
         )
 
@@ -66,17 +70,18 @@ class C53(CtaTemplate):
         # 获取合约信息
         self.contract_multiplier = self.get_size()
         if self.contract_multiplier is None or self.contract_multiplier<= 0:
-            self._logger.warning(f"未获取到合约乘数，使用默认值1")
+            self._logger.warning(f"{self.strategy_name} 未找到 {self.vt_symbol} 的合约乘数,设置为默认值 1")
             self.contract_multiplier = 1
 
     def on_init(self) -> None:
         self._logger.info(f"策略初始化中: {self.strategy_name}")
         try:
-            self.load_bar(days=7, interval=Interval.MINUTE, callback=self.on_bar)
-            if self.am.count >= self.am.size:
+            window, interval = split_win_interval(self.interval)
+            self.load_bar(days=7, interval=interval, callback=self.on_bar)
+            if self.am.inited:
                 self._logger.info(f"策略加载历史数据完成 {self.strategy_name}")
             else:
-                self._logger.warning(f"策略加载历史数据不足,无法开启 {self.strategy_name}")
+                self._logger.error(f"策略加载历史数据不足,无法开启 {self.strategy_name}, {self.am.count}/{self.am.size} ")
         except Exception as e:
             self._logger.info(f"策略加载历史数据出错: {self.strategy_name} {e}")
 
@@ -91,6 +96,9 @@ class C53(CtaTemplate):
         self.bg.update_tick(tick)
 
     def on_bar(self, bar: BarData) -> None:
+        self.bg.update_bar(bar)
+
+    def on_window_bar(self, bar: BarData) -> None:
         self.cancel_all()
         self.am.update_bar(bar)
         if not self.am.inited:

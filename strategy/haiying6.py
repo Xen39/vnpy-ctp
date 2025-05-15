@@ -2,14 +2,15 @@ import numpy as np
 import logging
 
 from vnpy_ctastrategy import *
-from vnpy.trader.constant import Interval
 
+from ctp.input import split_win_interval
 from ctp.output import to_string
 from ctp.settings import SETTINGS
 
 
 class HaiYing6(CtaTemplate):
     _logger: logging.Logger = None
+    interval: str = "1m"
 
     # 策略参数
     fund = 10_000_000  # 初始资金
@@ -48,14 +49,26 @@ class HaiYing6(CtaTemplate):
         self._logger = SETTINGS["logger"]
         assert self._logger is not None
 
-        # 创建K线合成器
-        self.bg = BarGenerator(on_bar=self.on_bar, window=1, on_window_bar=None, interval=Interval.MINUTE, daily_end=None)
+        if "interval" in setting:
+            self.interval = setting["interval"]
+        else:
+            self._logger.warning(f"{self.strategy_name}: interval not found in setting, using default value 1m")
+
+        window, interval = split_win_interval(self.interval)
+        # K线合成器
+        self.bg = BarGenerator(
+            on_bar=self.on_bar,
+            window=window,
+            on_window_bar=self.on_window_bar,
+            interval=interval,
+            daily_end=None
+        )
         # 创建时间序列管理器
         self.am = ArrayManager(size=self.len_period * 2 + 10)
         self._logger.info(f"策略创建: {self.strategy_name}")
         # 获取合约信息
         self.contract_multiplier = self.get_size()
-        if self.contract_multiplier <= 0:
+        if self.contract_multiplier is None or self.contract_multiplier <= 0:
             self._logger.warning(f"{self.strategy_name} 未找到 {self.vt_symbol} 的合约乘数,设置为默认值 1")
             self.contract_multiplier = 1
 
@@ -70,11 +83,12 @@ class HaiYing6(CtaTemplate):
     def on_init(self):
         self._logger.info(f"策略初始化中: {self.strategy_name}")
         try:
-            self.load_bar(days=7, interval=Interval.MINUTE, callback=self.on_bar)
-            if self.am.count >= self.am.size:
+            window, interval = split_win_interval(self.interval)
+            self.load_bar(days=50, interval=interval, callback=self.on_bar)
+            if self.am.inited:
                 self._logger.info(f"策略加载历史数据完成 {self.strategy_name}")
             else:
-                self._logger.warning(f"策略加载历史数据不足,无法开启 {self.strategy_name}")
+                self._logger.error(f"策略加载历史数据不足,无法开启 {self.strategy_name} {self.am.count}/{self.am.size}")
         except Exception as e:
             self._logger.info(f"策略加载历史数据出错: {self.strategy_name} {e}")
 
@@ -83,9 +97,7 @@ class HaiYing6(CtaTemplate):
 
     def on_stop(self):
         self._logger.info(f"策略停止: {self.strategy_name}")
-
-    def on_tick(self, tick: TickData):
-        self.bg.update_tick(tick)
+        self.cancel_all()
 
     def get_margin_ratio(self):
         return 0.2
@@ -116,7 +128,10 @@ class HaiYing6(CtaTemplate):
                 result[i] = np.max(array[i - period + 1:i + 1])
         return result
 
-    def on_bar(self, bar: BarData):
+    def on_bar(self, bar: BarData) -> None:
+        self.bg.update_bar(bar)
+
+    def on_window_bar(self, bar: BarData) -> None:
         self.am.update_bar(bar)
         if not self.am.inited:
             self._logger.debug(f"策略正在加载数据: {self.strategy_name}, {self.am.count}/{self.am.size}")

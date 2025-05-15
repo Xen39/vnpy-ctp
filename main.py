@@ -96,7 +96,7 @@ if __name__ == "__main__":
                         print(to_string(order_data))
                 # strategy
                 elif op == "as":
-                    session.add_strategy(session.input_strategy_class_name(), input_vt_symbol())
+                    session.add_strategy(session.input_strategy_class_name(), input_vt_symbol(), input_interval())
                 elif op == "rs":
                     strategy_names = input("请输入策略名称(多个策略之间以','间隔)(输入'all'以全部停止):").split(',')
                     strategy_names = [x.strip() for x in strategy_names]

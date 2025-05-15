@@ -299,7 +299,7 @@ class CtpSession:
         idx = input_int(0, len(strategy_dict) - 1)
         return strategy_dict[idx]
 
-    def add_strategy(self, strategy_class_name: str, vt_symbols: str | list, setting={}) -> None:
+    def add_strategy(self, strategy_class_name: str, vt_symbols: str | list, interval: str) -> None:
         if strategy_class_name not in self.cta_engine.get_all_strategy_class_names():
             self.logger().critical(
                 f"目标策略 {strategy_class_name} 不在策略列表中:{self.cta_engine.get_all_strategy_class_names()}")
@@ -317,7 +317,7 @@ class CtpSession:
                 self.logger().warning(f"已存在同名策略 {strategy_name}, 无法重复添加")
                 continue
             self.logger().debug(f"[执行]添加策略 {strategy_name}")
-            self.cta_engine.add_strategy(strategy_class_name, strategy_name, vt_symbol, setting)
+            self.cta_engine.add_strategy(strategy_class_name, strategy_name, vt_symbol, {"interval": interval})
             self.cta_engine.init_strategy(strategy_name)
             strategy_names.append(strategy_name)
         time.sleep(3) # waiting for strategy initialization

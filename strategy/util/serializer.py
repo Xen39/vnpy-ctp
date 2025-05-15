@@ -16,6 +16,7 @@ class StrategyJsonSerializer:
         dct={
             "class_name": strategy.__class__.__name__,
             "vt_symbol": strategy.vt_symbol,
+            "interval": strategy.interval if hasattr(strategy, "interval") else None,
             "position": strategy.pos,
         }
         return {strategy.strategy_name: dct}
@@ -25,9 +26,11 @@ class StrategyJsonSerializer:
         assert len(dct) == 1
         strategy_name = list(dct.keys())[0]
         d: dict = dct[strategy_name]
-        setting = {
-            "pos": d["position"]
-        }
+        setting = dict()
+        if "interval" in d:
+            setting["interval"] = d["interval"]
+        if "position" in d:
+            setting["pos"] = d["position"]
         return {
             "class_name": d["class_name"],
             "strategy_name": strategy_name,
