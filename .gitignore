@@ -2,3 +2,4 @@
 .idea/
 **/__pycache__/
 log/*
+config/strategies.json
