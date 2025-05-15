@@ -43,7 +43,9 @@ if __name__ == "__main__":
             session.close()
             exit(-1)
     session.logger().info("CTP连接成功!")
-    session.load_strategy(os.path.join(os.path.dirname(__file__),"config/strategies.json"))
+    strategy_record_filepath = os.path.join(os.path.dirname(__file__),"config/strategies.json")
+    if os.path.isfile(strategy_record_filepath):
+        session.load_strategy(strategy_record_filepath)
     try:
         while True:
             time.sleep(0.5) #  to print input tip after last operation's output
