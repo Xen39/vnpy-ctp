@@ -57,7 +57,8 @@ if __name__ == "__main__":
                         print(f"{k:8} {v}")
                 # query
                 elif op == "qa":
-                    session.get_all_accounts()
+                    for account in session.get_all_accounts():
+                        print(to_string(account))
                 elif op == "qc":
                     print(session.get_all_contracts_pretty_str())
                 elif op == "qm":
