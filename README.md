@@ -21,7 +21,7 @@
 ## Step 4. 配置账号信息 
 
 - ### 根据个人账号和经纪商配置 config/config.ini
-- ### 注意当使用 [datafeed] 下的 platform 指定为 tushare 时, username 为你的手机号, password 为 你的token (请前往tushare官网,登录后在个人主页中查询)
+- ### 注意,当使用 [datafeed] 下的 platform 指定为 tushare 时, username 随意(不填也可), password 为你的 token (请前往tushare官网,登录后在个人主页中查看)
 
 ## Step 5. 运行主程序 main.py
 
@@ -35,4 +35,4 @@
 # 使用教程
 
 - ### 主程序 main.py 启动后输入 h 查看帮助, 根据提示进行操作
-- ### 提示 "策略记录文件已存在,是否覆盖?" 时, 如果你想要用当前策略(包括仓位等状态)覆盖原有策略则输入y, 否则输入n
+- ### 提示 "策略记录文件已存在,是否覆盖?" 时, 如果你想要用当前策略(包括仓位等状态)覆盖原有策略则输入y, 否则输入n. 一般想要继续运行都选择y
