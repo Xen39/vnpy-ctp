@@ -83,12 +83,6 @@ class HaiYing6(BaseStrategy):
             self._logger.debug(f"策略正在加载数据: {self.strategy_name}, {self.am.count}/{self.am.size}")
             return
 
-        self.cancel_all()  # 取消所有未成交订单
-
-        # 更新技术指标
-        if not self.am.inited:
-            return
-
         # 计算ATR
         self.atr_value = self.am.atr(self.atr_length)
 
@@ -149,22 +143,21 @@ class HaiYing6(BaseStrategy):
                 (bar.close_price > self.lowest_price + self.atr_value * self.n_multiplier / 10)
 
         # 执行交易逻辑
-        if current_pos == 0:
-            if bky67 or bkh15:
-                self.buy(bar.close_price + 5, self.trading_size)
-                self.entry_price = bar.close_price
-                self.highest_price = bar.high_price
-            elif sky67 or skh15:
-                self.short(bar.close_price - 5, self.trading_size)
-                self.entry_price = bar.close_price
-                self.lowest_price = bar.low_price
+        if bky67 or bkh15:
+            self.buy(bar.close_price + self.tick_price, self.trading_size)
+            self.entry_price = bar.close_price
+            self.highest_price = bar.high_price
+        elif sky67 or skh15:
+            self.short(bar.close_price - self.tick_price, self.trading_size)
+            self.entry_price = bar.close_price
+            self.lowest_price = bar.low_price
 
-        elif current_pos > 0:
+        if current_pos > 0:
             self.highest_price = max(self.highest_price, bar.high_price)
             if spy67 or sph15:
-                self.sell(bar.close_price - 5, abs(current_pos))
+                self.sell(bar.close_price - self.tick_price, abs(current_pos))
 
         elif current_pos < 0:
             self.lowest_price = min(self.lowest_price, bar.low_price)
             if bpy67 or bph15:
-                self.cover(bar.close_price + 5, abs(current_pos))
+                self.cover(bar.close_price + self.tick_price, abs(current_pos))
