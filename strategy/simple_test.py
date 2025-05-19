@@ -25,6 +25,8 @@ class SimpleTest(BaseStrategy):
         if not self.am.inited:
             self._logger.info(f"{self.strategy_name} initializing: {self.am.count}/{self.am.size}")
             return
+        if not self.trading:
+            return
 
         if not self.bought:
             self._logger.info(f"{self.strategy_name} 正在买入")
