@@ -23,8 +23,8 @@ help_list = {
     "lo": "list order 列出历史订单",
     # strategy
     "as": "add strategy 添加策略",
-    "rs": "remove strategy 停止并删除策略",
     "ls": "list strategy 列出所有策略",
+    "ss": "stop strategy 停止策略",
     # subscribe
     "sub": "subscribe 订阅行情",
     "unsub" : "unsubscribe 取消订阅行情"
@@ -97,12 +97,12 @@ if __name__ == "__main__":
                 # strategy
                 elif op == "as":
                     session.add_strategy(session.input_strategy_class_name(), input_vt_symbol(), input_interval())
-                elif op == "rs":
+                elif op == "ls":
+                    print(session.get_all_strategies_pretty_str())
+                elif op == "ss":
                     strategy_names = input("请输入策略名称(多个策略之间以','间隔)(输入'all'以全部停止):").split(',')
                     strategy_names = [x.strip() for x in strategy_names]
                     session.stop_strategy(strategy_names)
-                elif op == "ls":
-                    print(session.get_all_strategies_pretty_str())
                 # subscribe
                 elif op == "sub":
                     session.subscribe(*input_symbol_exchange())
