@@ -3,11 +3,13 @@ import os
 import time
 import traceback
 
+from vnpy.trader.constant import Direction, Offset
+from vnpy.trader.object import OrderRequest, OrderType, CancelRequest
+
 from ctp.ctp_session import CtpSession
 from ctp.input import *
 from ctp.output import *
-from vnpy.trader.constant import Direction, Offset
-from vnpy.trader.object import OrderRequest, OrderType, CancelRequest
+from ctp.time_manager import sleep_till
 
 help_list = {
     "q": "quit 退出程序",
@@ -27,28 +29,23 @@ help_list = {
     "ss": "stop strategy 停止策略",
     # subscribe
     "sub": "subscribe 订阅行情",
-    "unsub" : "unsubscribe 取消订阅行情"
+    "unsub": "unsubscribe 取消订阅行情"
 }
 
 if __name__ == "__main__":
     session = CtpSession()
     session.read_config()
     session.connect()
-    seconds_cnt = 0
-    while not session.inited():
-        time.sleep(1)
-        seconds_cnt += 1
-        if seconds_cnt > 60:
-            session.logger().error("连接CTP超时")
-            session.close()
-            exit(-1)
-    session.logger().info("CTP连接成功!")
-    strategy_record_filepath = os.path.join(os.path.dirname(__file__),"config/strategies.json")
+    if sleep_till(session.inited):
+        session.logger().info("CTP连接成功!")
+    else:
+        session.logger().error("连接CTP超时")
+    strategy_record_filepath = os.path.join(os.path.dirname(__file__), "config/strategies.json")
     if os.path.isfile(strategy_record_filepath):
         session.load_strategy(strategy_record_filepath)
     try:
         while True:
-            time.sleep(0.5) #  to print input tip after last operation's output
+            time.sleep(0.5)  # to print input tip after last operation's output
             op = input("请输入命令:").strip()
             if op in help_list:
                 if op == "q":

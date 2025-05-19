@@ -25,6 +25,7 @@ from strategy.util.serializer import StrategyJsonSerializer
 from .input import input_int
 from .output import to_string
 from .settings import SETTINGS
+from .time_manager import sleep_till
 
 SETTINGS["log.active"] = True
 SETTINGS["log.level"] = logging.DEBUG
@@ -320,9 +321,11 @@ class CtpSession:
             self.cta_engine.add_strategy(strategy_class_name, strategy_name, vt_symbol, {"interval": interval})
             self.cta_engine.init_strategy(strategy_name)
             strategy_names.append(strategy_name)
-        time.sleep(3) # waiting for strategy initialization
         for strategy_name in strategy_names:
-            self.cta_engine.start_strategy(strategy_name)
+            if sleep_till(lambda : self.get_strategy(strategy_name).inited, timeout=30):
+                self.cta_engine.start_strategy(strategy_name)
+            else:
+                self.logger().error(f"等待策略 {strategy_name} 初始化超时")
 
     def get_all_strategies(self) -> list[CtaTemplate]:
         strategies = list(self.cta_engine.strategies.values())
