@@ -47,8 +47,6 @@ class C53(BaseStrategy):
             self._logger.debug(f"策略正在加载数据: {self.strategy_name}, {self.am.count}/{self.am.size}")
             return
 
-        self.cancel_all()
-
         # 计算ATR
         self.atr_value = self.am.atr(self.atr_length)
         # 计算EMA（使用前一根K线的收盘价）
@@ -103,21 +101,20 @@ class C53(BaseStrategy):
         ]) if current_pos < 0 else False
 
         # 执行交易逻辑
-        if current_pos == 0:
-            # 开仓逻辑
-            if long_condition:
-                price = bar.close_price + self.tick_price  # 滑点处理
-                self.buy(price, trading_size)
-                self.entry_price = bar.close_price
-                self.highest_price = bar.high_price
+        # 开仓逻辑
+        if long_condition:
+            price = bar.close_price + self.tick_price  # 滑点处理
+            self.buy(price, trading_size)
+            self.entry_price = bar.close_price
+            self.highest_price = bar.high_price
 
-            elif short_condition:
-                price = bar.close_price - self.tick_price
-                self.short(price, trading_size)
-                self.entry_price = bar.close_price
-                self.lowest_price = bar.low_price
+        elif short_condition:
+            price = bar.close_price - self.tick_price
+            self.short(price, trading_size)
+            self.entry_price = bar.close_price
+            self.lowest_price = bar.low_price
 
-        elif current_pos > 0:
+        if current_pos > 0:
             # 更新多头持仓最高价
             self.highest_price = max(self.highest_price, bar.high_price)
             # 平仓逻辑
@@ -128,7 +125,6 @@ class C53(BaseStrategy):
         elif current_pos < 0:
             # 更新空头持仓最低价
             self.lowest_price = min(self.lowest_price, bar.low_price)
-
             # 平仓逻辑
             if short_stop:
                 price = bar.close_price + self.tick_price
